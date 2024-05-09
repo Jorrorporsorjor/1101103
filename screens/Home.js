@@ -1,28 +1,38 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
+// สร้างคอมโพเนนท์ ButtonComponent
+const ButtonComponent = ({ text, onPress }) => (
+  <TouchableOpacity
+    style={styles.button}
+    onPress={onPress}
+  >
+    <Text style={styles.buttonText}>{text}</Text>
+  </TouchableOpacity>
+);
+
 const HomeScreen = ({ navigation }) => {
+  const moodToday = 'Happy';
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome to My App</Text>
-      {/* กราฟ */}
-      <View style={styles.chartContainer}>
-        {/* ส่วนของกราฟอาจต้องนำเข้าคอมโพเนนท์ Chart ตามต้องการ */}
-        <Text style={styles.chartText}>กราฟแสดงผลอารมณ์วันนี้</Text>
-        {/* เนื่องจาก Chart ไม่มีอยู่ใน React Native โดยปกติ คุณอาจต้องใช้ไลบรารีอื่น ๆ หรือสร้าง Component ของคุณเอง */}
-      </View>
-      {/* ปุ่มแรก */}
-      <TouchableOpacity
-        style={styles.button}
-      >
-        <Text style={styles.buttonText}>Button 1</Text>
-      </TouchableOpacity>
-      {/* ปุ่มที่สอง */}
-      <TouchableOpacity
-        style={styles.button}
-      >
-        <Text style={styles.buttonText}>Button 2</Text>
-      </TouchableOpacity>
+      <Text style={styles.moodText}>Your mood today: {moodToday}</Text>
+      {/* เรียกใช้งาน ButtonComponent */}
+      <ButtonComponent
+        text="Button 1"
+        onPress={() => {
+          // การทำงานเมื่อปุ่มถูกกด
+          console.log("Button 1 pressed");
+        }}
+      />
+      <ButtonComponent
+        text="Button 2"
+        onPress={() => {
+          // การทำงานเมื่อปุ่มถูกกด
+          console.log("Button 2 pressed");
+        }}
+      />
     </View>
   );
 };
@@ -36,7 +46,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    marginBottom: 30,
+    marginBottom: 10, // ลดระยะห่างระหว่าง title กับ moodText
+  },
+  moodText: {
+    fontSize: 18,
+    marginTop: 10, // เพิ่มระยะห่างระหว่าง moodText กับปุ่ม
   },
   button: {
     width: 200,
@@ -50,13 +64,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 18,
-  },
-  chartContainer: {
-    marginTop: 20, // เพิ่มระยะห่างระหว่างปุ่มกับกราฟ
-  },
-  chartText: {
-    fontSize: 16,
-    marginBottom: 10,
   },
 });
 
