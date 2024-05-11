@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 
-const theapyscreen = ({ navigation }) => {
+const Tips = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <View style={styles.section1}>
@@ -85,4 +85,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default theapyscreen;
+export default Tips;
