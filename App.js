@@ -10,7 +10,7 @@ import MoodTrackerScreen from './screens/MoodTracker';
 import ProfileScreen from './screens/Profile';
 import HomeScreen from './screens/Home';
 import ChatScreen from './screens/Chat';
-import theapyscreen from'./screens/Therapy';
+import Theapyscreen from'./screens/Therapy';
 import TipsScreen from'./screens/Tips';
 import MAScreen from'./screens/MA';
 import SongScreen from'./screens/Song';
@@ -30,7 +30,7 @@ const App = () => {
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="Profile" component={MainTabNavigator} options={{ headerShown: false }} />
         <Stack.Screen name="Tips" component={TipsScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Therapy" component={theapyscreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Therapy" component={Theapyscreen} options={{ headerShown: false }} />
         <Stack.Screen name="MA" component={MAScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Song" component={SongScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Book" component={BookScreen} options={{ headerShown: false }} />
@@ -82,7 +82,7 @@ const MainTabNavigator = () => {
       />
       <Tab.Screen
         name="Thearapy"
-        component={theapyscreen} // เปลี่ยนจาก ProfileScreen เป็น theapyscreen
+        component={Theapyscreen} // เปลี่ยนจาก ProfileScreen เป็น theapyscreen
         options={{
           tabBarIcon: ({ color, size }) => (
             <AntDesign name="user" size={24} color="black" />
