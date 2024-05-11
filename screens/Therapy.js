@@ -3,7 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-nati
 
 
 
-const theapyscreen = ({ navigation }) => {
+const Theapyscreen = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <View style={styles.section1}>
@@ -70,4 +70,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default theapyscreen;
+export default Theapyscreen;
