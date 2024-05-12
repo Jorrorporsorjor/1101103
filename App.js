@@ -85,7 +85,7 @@ const MainTabNavigator = () => {
         component={Theapyscreen} // เปลี่ยนจาก ProfileScreen เป็น theapyscreen
         options={{
           tabBarIcon: ({ color, size }) => (
-            <AntDesign name="user" size={24} color="black" />
+            <AntDesign name="folder1" size={24} color="black" />
           )
         }}
       />
