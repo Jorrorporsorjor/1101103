@@ -6,6 +6,7 @@ import { auth } from '../config/firebase';
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
 
   const handleLogin = () => {
     if (!email || !password) {
@@ -16,10 +17,19 @@ export default function LoginScreen({ navigation }) {
     signInWithEmailAndPassword(auth, email, password)
       .then(() => {
         console.log("Login Success");
-        // นำทางไปยังหน้าหลักหรือ Dashboard หลังจากเข้าสู่ระบบเรียบร้อย
-        navigation.navigate("Profile"); // ชื่อหน้าต่าง ๆ ที่คุณต้องการ
+  
+        // Conditional navigation based on the presence of "doc" in the email
+        if (email.toLowerCase().includes("doc")) {
+          navigation.navigate("DocTabs");
+        } else {
+          navigation.navigate("MainTabs");
+        }
       })
       .catch((err) => Alert.alert("Login error", err.message));
+  };
+
+  const toggleSecureEntry = () => {
+    setSecureTextEntry(!secureTextEntry);
   };
 
   return (
@@ -34,32 +44,37 @@ export default function LoginScreen({ navigation }) {
         value={email}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        onChangeText={setPassword}
-        value={password}
-      />
+      <View style={[styles.input, { flexDirection: 'row', alignItems: 'center' }]}>
+        <TextInput
+          style={{ flex: 1 }}
+          placeholder="Password"
+          secureTextEntry={secureTextEntry}
+          onChangeText={setPassword}
+          value={password}
+        />
+        <TouchableOpacity onPress={toggleSecureEntry}>
+          <Text>{secureTextEntry ? 'Show' : 'Hide'}</Text>
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Log In</Text>
       </TouchableOpacity>
 
-      <View style={{marginTop: 20, flexDirection: 'row', alignItems: 'center' }}>
-      <Text style={styles.signup}>Don't have an account?</Text>
-      <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
-        <Text style={{color: '#9932CC'}}> Sign Up</Text>
-      </TouchableOpacity>
-    </View>
-    <View style={{marginTop: 10, flexDirection: 'row', alignItems: 'center' }}>
-      <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword")}>
-        <Text style={{color: '#9932CC'}}> Forgot Password</Text>
-      </TouchableOpacity>
-    </View>
+      <View style={{ marginTop: 20, flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={styles.signup}>Don't have an account?</Text>
+        <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
+          <Text style={{ color: '#9932CC' }}> Sign Up</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center' }}>
+        <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword")}>
+          <Text style={{ color: '#9932CC' }}> Forgot Password</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -92,5 +107,9 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#ffffff',
     fontSize: 18,
+  },
+  signup: {
+    fontSize: 14,
+    color: '#999',
   },
 });
