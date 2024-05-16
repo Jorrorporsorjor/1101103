@@ -1,38 +1,68 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { Calendar } from 'react-native-calendars';
+import { AntDesign } from '@expo/vector-icons';
+import MoodSelection from './MoodSelection'; // import the MoodSelection component
 
-// สร้างคอมโพเนนท์ ButtonComponent
-const ButtonComponent = ({ text, onPress }) => (
-  <TouchableOpacity
-    style={styles.button}
-    onPress={onPress}
-  >
-    <Text style={styles.buttonText}>{text}</Text>
-  </TouchableOpacity>
-);
+const HomeScreen = () => {
+  const [selectedDate, setSelectedDate] = useState('');
+  const [moodData, setMoodData] = useState({});
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-const HomeScreen = ({ navigation }) => {
-  const moodToday = 'Happy';
+  const handleDayPress = (day) => {
+    setSelectedDate(day.dateString);
+    setIsModalVisible(true);
+  };
+
+  const handleSaveMood = (mood, comment) => {
+    const newMoodData = { ...moodData, [selectedDate]: { mood, comment } };
+    setMoodData(newMoodData);
+    setIsModalVisible(false);
+  };
+
+  const getMoodIcon = (mood) => {
+    const moods = {
+      1: { icon: 'frowno', color: 'blue' },
+      2: { icon: 'meh', color: 'grey' },
+      3: { icon: 'smileo', color: 'green' },
+    };
+    const moodObj = moods[mood];
+    return moodObj ? <AntDesign name={moodObj.icon} size={20} color={moodObj.color} /> : null;
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to My App</Text>
-      <Text style={styles.moodText}>Your mood today: {moodToday}</Text>
-      {/* เรียกใช้งาน ButtonComponent */}
-      <ButtonComponent
-        text="Button 1"
-        onPress={() => {
-          // การทำงานเมื่อปุ่มถูกกด
-          console.log("Button 1 pressed");
-        }}
+      <Text style={styles.title}>Welcome to HAPPISM</Text>
+
+      <Calendar
+        onDayPress={handleDayPress}
+        markedDates={Object.keys(moodData).reduce((acc, date) => {
+          acc[date] = {
+            customStyles: {
+              container: {
+                backgroundColor: moodData[date].mood === 1 ? 'blue' : moodData[date].mood === 2 ? 'grey' : 'green',
+                bottom: 0, // Add this line to position the icon at the bottom
+              },
+              text: {
+                color: 'white',
+              },
+            },
+            // Render the mood icon under the date
+            renderCustomMarker: () => getMoodIcon(moodData[date].mood),
+          };
+          return acc;
+        }, {})}
+        markingType={'custom'}
       />
-      <ButtonComponent
-        text="Button 2"
-        onPress={() => {
-          // การทำงานเมื่อปุ่มถูกกด
-          console.log("Button 2 pressed");
-        }}
-      />
+
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <MoodSelection onSave={handleSaveMood} />
+      </Modal>
     </View>
   );
 };
@@ -40,30 +70,13 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    padding: 20,
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 24,
-    marginBottom: 10, // ลดระยะห่างระหว่าง title กับ moodText
-  },
-  moodText: {
-    fontSize: 18,
-    marginTop: 10, // เพิ่มระยะห่างระหว่าง moodText กับปุ่ม
-  },
-  button: {
-    width: 200,
-    height: 40,
-    backgroundColor: '#3498db',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10, // เพิ่มระยะห่างระหว่างปุ่ม
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
 
