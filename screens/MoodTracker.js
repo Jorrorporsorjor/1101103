@@ -1,71 +1,116 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
-import Slider from '@react-native-community/slider';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView } from 'react-native';
+import { Calendar } from 'react-native-calendars';
+import { AntDesign } from '@expo/vector-icons';
 
 const MoodTrackerScreen = () => {
-  const [mood, setMood] = useState(50); // Mood อาจจะเป็นเลขระหว่าง 0-100
+  const [selectedDate, setSelectedDate] = useState('');
+  const [moodData, setMoodData] = useState({});
+  const [selectedMood, setSelectedMood] = useState(null);
   const [comment, setComment] = useState('');
 
+  const moods = [
+    { value: 1, icon: 'frowno', color: 'blue' },
+    { value: 2, icon: 'meh', color: 'grey' },
+    { value: 3, icon: 'smileo', color: 'green' },
+  ];
+
   const handleSaveMood = () => {
-    // บันทึกอารมณ์และความคิดเห็น
-    console.log(`Mood: ${mood}, Comment: ${comment}`);
-    // ส่งข้อมูลไปยังเซิร์ฟเวอร์ หรือบันทึกใน Local Storage
+    if (!selectedDate || selectedMood === null) {
+      console.log('No date or mood selected');
+      return;
+    }
+
+    const newMoodData = { ...moodData, [selectedDate]: { mood: selectedMood, comment: comment } };
+    setMoodData(newMoodData);
+
+    console.log(`Saved Mood: ${selectedMood} for Date: ${selectedDate}, Comment: ${comment}`);
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Mood Tracker</Text>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Mood Tracker</Text>
 
-      <Slider
-        style={styles.slider}
-        minimumValue={0}
-        maximumValue={100}
-        value={mood}
-        onValueChange={setMood}
-        step={1}
-        thumbTintColor="#007bff"
-        minimumTrackTintColor="#007bff"
-      />
+        <Calendar
+          onDayPress={(day) => setSelectedDate(day.dateString)}
+          markedDates={Object.keys(moodData).reduce((acc, date) => {
+            acc[date] = {
+              marked: true,
+              customStyles: {
+                container: {
+                  backgroundColor: moodData[date].mood === 1 ? 'blue' : moodData[date].mood === 2 ? 'grey' : 'green',
+                },
+                text: {
+                  color: 'white',
+                },
+              },
+            };
+            return acc;
+          }, {})}
+          markingType={'custom'}
+        />
 
-      <Text style={styles.moodValue}>{mood}</Text>
+        <View style={styles.moodContainer}>
+          {moods.map((mood) => (
+            <TouchableOpacity
+              key={mood.value}
+              style={[
+                styles.moodIcon,
+                selectedMood === mood.value && styles.selectedMood,
+              ]}
+              onPress={() => setSelectedMood(mood.value)}
+            >
+              <AntDesign name={mood.icon} size={50} color={mood.color} />
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <TextInput
-        style={styles.commentInput}
-        placeholder="Add comment..."
-        multiline
-        onChangeText={setComment}
-        value={comment}
-      />
+        <TextInput
+          style={styles.commentInput}
+          placeholder="Add comment..."
+          multiline
+          onChangeText={setComment}
+          value={comment}
+        />
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleSaveMood}>
-        <Text style={styles.saveButtonText}>Save</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSaveMood}>
+          <Text style={styles.saveButtonText}>Save</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 };
 
-
-
-
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#ffffff',
+    width: '100%',
   },
   title: {
     fontSize: 24,
     marginBottom: 20,
     textAlign: 'center',
   },
-  slider: {
-    width: '100%',
-    height: 40,
+  moodContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 20,
   },
-  moodValue: {
-    fontSize: 18,
-    textAlign: 'center',
-    marginTop: 10,
+  moodIcon: {
+    padding: 10,
+  },
+  selectedMood: {
+    borderWidth: 2,
+    borderColor: '#007bff',
+    borderRadius: 10,
   },
   commentInput: {
     marginTop: 20,
