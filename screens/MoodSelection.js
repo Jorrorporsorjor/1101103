@@ -46,9 +46,9 @@ const MoodSelection = ({ onSave }) => {
           { opacity: selectedMood !== null ? 1 : 0.5 },
         ]}
         onPress={() => onSave(selectedMood, comment)}
-        disabled={selectedMood === null} // Disable save button if no mood is selected
+        disabled={selectedMood === null}
       >
-        <Text style={styles.saveButtonText}>บันทึก</Text>
+        <Text style={styles.saveButtonText}>Save</Text>
       </TouchableOpacity>
     </View>
   );
