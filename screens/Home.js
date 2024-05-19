@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Image } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { AntDesign } from '@expo/vector-icons';
 import MoodSelection from './MoodSelection'; // import the MoodSelection component
 
 const HomeScreen = () => {
@@ -21,13 +20,14 @@ const HomeScreen = () => {
   };
 
   const getMoodIcon = (mood) => {
-    const moods = {
-      1: { icon: 'frowno', color: 'blue' },
-      2: { icon: 'meh', color: 'grey' },
-      3: { icon: 'smileo', color: 'green' },
+    const moodIcons = {
+      1: require('../pic/emo_awful.png'),
+      2: require('../pic/emo_bad.png'),
+      3: require('../pic/emo_meh.png'),
+      4: require('../pic/emo_good.png'),
+      5: require('../pic/emo_great.png'),
     };
-    const moodObj = moods[mood];
-    return moodObj ? <AntDesign name={moodObj.icon} size={20} color={moodObj.color} /> : null;
+    return moodIcons[mood] ? <Image source={moodIcons[mood]} style={styles.moodIcon} /> : null;
   };
 
   return (
@@ -36,23 +36,16 @@ const HomeScreen = () => {
 
       <Calendar
         onDayPress={handleDayPress}
-        markedDates={Object.keys(moodData).reduce((acc, date) => {
-          acc[date] = {
-            customStyles: {
-              container: {
-                backgroundColor: moodData[date].mood === 1 ? 'blue' : moodData[date].mood === 2 ? 'grey' : 'green',
-                bottom: 0, // Add this line to position the icon at the bottom
-              },
-              text: {
-                color: 'white',
-              },
-            },
-            // Render the mood icon under the date
-            renderCustomMarker: () => getMoodIcon(moodData[date].mood),
-          };
-          return acc;
-        }, {})}
-        markingType={'custom'}
+        dayComponent={({ date, state }) => (
+          <TouchableOpacity onPress={() => handleDayPress(date)}>
+            <View style={styles.dayContainer}>
+              <Text style={[styles.dayText, state === 'disabled' && styles.disabledText]}>
+                {date.day}
+              </Text>
+              {moodData[date.dateString] && getMoodIcon(moodData[date.dateString].mood)}
+            </View>
+          </TouchableOpacity>
+        )}
       />
 
       <Modal
@@ -77,6 +70,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginBottom: 20,
     textAlign: 'center',
+  },
+  dayContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayText: {
+    fontSize: 16,
+    color: 'black',
+  },
+  disabledText: {
+    color: 'gray',
+  },
+  moodIcon: {
+    width: 20,
+    height: 20,
+    marginTop: 5,
   },
 });
 
