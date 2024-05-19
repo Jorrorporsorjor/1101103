@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Image } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import MoodSelection from './MoodSelection'; // import the MoodSelection component
+import MoodSelection from './MoodSelection';
+import MoodStatistics from './MoodStatistics'; // Import MoodStatistics component
 
 const HomeScreen = () => {
   const [selectedDate, setSelectedDate] = useState('');
@@ -30,12 +31,40 @@ const HomeScreen = () => {
     return moodIcons[mood] ? <Image source={moodIcons[mood]} style={styles.moodIcon} /> : null;
   };
 
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome to HAPPISM</Text>
 
       <Calendar
         onDayPress={handleDayPress}
+        markedDates={{
+          ...Object.keys(moodData).reduce((acc, date) => {
+            acc[date] = {
+              customStyles: {
+                container: {
+                  backgroundColor: 'transparent',
+                },
+                text: {
+                  color: 'black',
+                },
+              },
+            };
+            return acc;
+          }, {}),
+          [today]: {
+            customStyles: {
+              container: {
+                backgroundColor: '#e6ffe6',
+              },
+              text: {
+                color: 'black',
+                fontWeight: 'bold',
+              },
+            },
+          },
+        }}
         dayComponent={({ date, state }) => (
           <TouchableOpacity onPress={() => handleDayPress(date)}>
             <View style={styles.dayContainer}>
@@ -46,7 +75,10 @@ const HomeScreen = () => {
             </View>
           </TouchableOpacity>
         )}
+        markingType={'custom'}
       />
+
+      <MoodStatistics moodData={moodData} />
 
       <Modal
         visible={isModalVisible}
