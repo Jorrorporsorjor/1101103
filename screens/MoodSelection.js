@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
-import { AntDesign } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image } from 'react-native';
 
 const MoodSelection = ({ onSave }) => {
   const [selectedMood, setSelectedMood] = useState(null);
   const [comment, setComment] = useState('');
 
   const moods = [
-    { value: 1, icon: 'frowno', color: 'blue' },
-    { value: 2, icon: 'meh', color: 'grey' },
-    { value: 3, icon: 'smileo', color: 'green' },
+    { value: 1, image: require('../pic/emo_awful.png') },
+    { value: 2, image: require('../pic/emo_bad.png') },
+    { value: 3, image: require('../pic/emo_meh.png') },
+    { value: 4, image: require('../pic/emo_good.png') },
+    { value: 5, image: require('../pic/emo_great.png') },
   ];
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Select Mood</Text>
+      <Text style={styles.title}>How are you?</Text>
 
       <View style={styles.moodContainer}>
         {moods.map((mood) => (
@@ -26,24 +27,28 @@ const MoodSelection = ({ onSave }) => {
             ]}
             onPress={() => setSelectedMood(mood.value)}
           >
-            <AntDesign name={mood.icon} size={50} color={mood.color} />
+            <Image source={mood.image} style={styles.moodImage} />
           </TouchableOpacity>
         ))}
       </View>
 
       <TextInput
         style={styles.commentInput}
-        placeholder="Add comment..."
+        placeholder="เพิ่มความคิดเห็น..."
         multiline
         onChangeText={setComment}
         value={comment}
       />
 
       <TouchableOpacity
-        style={styles.saveButton}
+        style={[
+          styles.saveButton,
+          { opacity: selectedMood !== null ? 1 : 0.5 },
+        ]}
         onPress={() => onSave(selectedMood, comment)}
+        disabled={selectedMood === null} // Disable save button if no mood is selected
       >
-        <Text style={styles.saveButtonText}>Save</Text>
+        <Text style={styles.saveButtonText}>บันทึก</Text>
       </TouchableOpacity>
     </View>
   );
@@ -73,6 +78,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#007bff',
     borderRadius: 10,
+  },
+  moodImage: {
+    width: 50,
+    height: 50,
   },
   commentInput: {
     marginTop: 20,
