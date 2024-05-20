@@ -18,7 +18,8 @@ import SongScreen from './screens/Song';
 import BookScreen from './screens/Book';
 import EbookScreen from './screens/Ebook';
 import DocChatScreen from './screens/DocChat';
-import AddScreen from './screens/AddMA';
+import UpdateMAScreen from './screens/AddNewData';
+
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -115,7 +116,7 @@ const App = () => {
         <Stack.Screen name="Song" component={SongScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Book" component={BookScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Ebook" component={EbookScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AddMA" component={AddScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AddNewData" component={UpdateMAScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
