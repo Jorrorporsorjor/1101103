@@ -1,32 +1,56 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
+import { firebase } from '../config/firebase';
 
-const Button = ({ title, image }) => {
-  return (
-    <View style={styles.button}>
-      {image && <Image source={image} style={styles.image} />}
-      <Text style={styles.buttonText}>{title}</Text>
-    </View>
-  );
-};
+const MAScreen = ({ navigation }) => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const movieCollection = firebase.firestore().collection('movie');
 
-const MA = ({ navigation }) => {
+  useEffect(() => {
+    const unsubscribe = movieCollection.onSnapshot(
+      (querySnapshot) => {
+        const usersList = [];
+        querySnapshot.forEach((doc) => {
+          const { name, title } = doc.data();
+          usersList.push({
+            id: doc.id,
+            name,
+            title,
+          });
+        });
+        setUsers(usersList);
+        setLoading(false);
+      },
+      (error) => {
+        console.error(error);
+        setLoading(false);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.section1}>
         <Text style={[styles.text, { textAlign: 'center' }]}>MOVIE & ANIMATION</Text>
-        <View style={styles.backButton} onPress={() => navigation.navigate("Profile")}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <AntDesign name="arrowleft" size={24} color="black" />
-          <Text style={styles.backButtonText}>Go Back</Text>
-        </View>
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <Button title="6 วิธีเพิ่มความสุข" image={require('../assets/Test1.jpg')} />
-        <Button title="4 วิธีให้กำลังใจตัวเอง" style={{ marginTop: 10 }} />
-        <Button title="5 วิธีจัดการกับความเศร้า" style={{ marginTop: 10 }} />
-        <Button title="3 วิธีใช้ชีวิตให้คุ้มค่า" style={{ marginTop: 10 }} />
-        <Button title="2 วิธีเพิ่มความขี้เกียจ" style={{ marginTop: 10 }} />
+        {users.map((item) => (
+          <View key={item.id} style={styles.itemContainer}>
+            <Text>Movie Name: {item.name}</Text>
+            <Text>Movie Title: {item.title}</Text>
+          </View>
+        ))}
       </ScrollView>
     </View>
   );
@@ -41,6 +65,8 @@ const styles = StyleSheet.create({
   section1: {
     height: '17%',
     backgroundColor: '#FFAB7A',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
     fontSize: 30,
@@ -53,19 +79,15 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: '#9379C2',
     alignItems: 'center',
+    paddingTop: 20,
   },
-  button: {
-    marginTop: 20,
-    width: 350,
-    height: 100,
-    backgroundColor: 'white',
-    borderRadius: 30,
-  },
-  buttonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'black',
-    textAlign: 'right',
+  itemContainer: {
+    height: 80,
+    width: '80%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 10,
   },
   backButton: {
     flexDirection: 'row',
@@ -74,6 +96,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 30,
+    position: 'absolute',
+    top: 40,
+    left: 10,
   },
   backButtonText: {
     fontSize: 18,
@@ -81,11 +106,6 @@ const styles = StyleSheet.create({
     color: 'black',
     marginLeft: 10,
   },
-  image: {
-    width: 100,
-    height: 100,
-    marginRight: 10,
-  },
 });
 
-export default MA;
+export default MAScreen;
