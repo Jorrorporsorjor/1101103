@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { ProgressBar } from 'react-native-paper'; 
+import { ProgressBar } from 'react-native-paper';
 
 const moodIcons = {
-  1: { image: require('../pic/emo_awful.png'), name: 'Awful' },
-  2: { image: require('../pic/emo_bad.png'), name: 'Bad' },
-  3: { image: require('../pic/emo_meh.png'), name: 'Meh' },
-  4: { image: require('../pic/emo_good.png'), name: 'Good' },
-  5: { image: require('../pic/emo_great.png'), name: 'Great' },
+  1: { image: require('../pic/emo_awful.png'), name: 'Awful', color: '#fe6667' }, 
+  2: { image: require('../pic/emo_bad.png'), name: 'Bad', color: '#ffa648' },   
+  3: { image: require('../pic/emo_meh.png'), name: 'Meh', color: '#71b5e6' },    
+  4: { image: require('../pic/emo_good.png'), name: 'Good', color: '#a4d653' },  
+  5: { image: require('../pic/emo_great.png'), name: 'Great', color: '#41c7a4' }, 
 };
 
 const MoodStatistics = ({ moodData }) => {
@@ -28,7 +28,13 @@ const MoodStatistics = ({ moodData }) => {
         <View key={mood} style={styles.moodRow}>
           <Image source={moodIcons[mood].image} style={styles.moodImage} />
           <Text style={styles.moodText}>{moodIcons[mood].name}</Text>
-          <ProgressBar progress={count / totalMoods} style={styles.progressBar} />
+          <View style={styles.progressContainer}>
+            <ProgressBar
+              progress={count / totalMoods}
+              color={moodIcons[mood].color}
+              style={styles.progressBar}
+            />
+          </View>
           <Text style={styles.percentageText}>{((count / totalMoods) * 100).toFixed(1)}%</Text>
         </View>
       ))}
@@ -39,6 +45,7 @@ const MoodStatistics = ({ moodData }) => {
 const styles = StyleSheet.create({
   container: {
     marginTop: 20,
+    paddingHorizontal: 10,
   },
   moodRow: {
     flexDirection: 'row',
@@ -54,9 +61,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
   },
-  progressBar: {
+  progressContainer: {
     flex: 3,
+    marginRight: 10,
+  },
+  progressBar: {
     height: 10,
+    borderRadius: 5,
   },
   percentageText: {
     flex: 1,
