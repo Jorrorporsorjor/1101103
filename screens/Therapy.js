@@ -27,8 +27,8 @@ const Theapyscreen = ({ navigation }) => {
                 <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("Ebook")}>
                     <Text style={styles.buttonText}>E-BOOK</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("AddMA")}>
-                    <Text style={styles.buttonText}>ADD</Text>
+                <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("AddNewData")}>
+                    <Text style={styles.buttonText}>UPDATE MOVIE & ANIMATION</Text>
                 </TouchableOpacity>
             </ScrollView>
         </View>
