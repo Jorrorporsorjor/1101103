@@ -18,6 +18,7 @@ import SongScreen from './screens/Song';
 import BookScreen from './screens/Book';
 import EbookScreen from './screens/Ebook';
 import DocChatScreen from './screens/DocChat';
+import AddScreen from './screens/AddMA';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -102,7 +103,7 @@ const DocTabNavigator = () => {
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName="MainTabs">
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignUpScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
@@ -114,6 +115,7 @@ const App = () => {
         <Stack.Screen name="Song" component={SongScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Book" component={BookScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Ebook" component={EbookScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="AddMA" component={AddScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
