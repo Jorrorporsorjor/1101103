@@ -6,11 +6,11 @@ const MoodSelection = ({ onSave }) => {
   const [comment, setComment] = useState('');
 
   const moods = [
-    { value: 1, image: require('../pic/emo_awful.png') },
-    { value: 2, image: require('../pic/emo_bad.png') },
-    { value: 3, image: require('../pic/emo_meh.png') },
-    { value: 4, image: require('../pic/emo_good.png') },
-    { value: 5, image: require('../pic/emo_great.png') },
+    { value: 1, image: require('../pic/emo_awful.png'), label: 'Awful' },
+    { value: 2, image: require('../pic/emo_bad.png'), label: 'Bad' },
+    { value: 3, image: require('../pic/emo_meh.png'), label: 'Meh' },
+    { value: 4, image: require('../pic/emo_good.png'), label: 'Good' },
+    { value: 5, image: require('../pic/emo_great.png'), label: 'Great' },
   ];
 
   return (
@@ -28,6 +28,7 @@ const MoodSelection = ({ onSave }) => {
             onPress={() => setSelectedMood(mood.value)}
           >
             <Image source={mood.image} style={styles.moodImage} />
+            <Text style={styles.moodLabel}>{mood.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -72,16 +73,21 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   moodIcon: {
+    alignItems: 'center',
     padding: 10,
   },
   selectedMood: {
     borderWidth: 2,
-    borderColor: '#007bff',
+    borderColor: '#8965d4',
     borderRadius: 10,
   },
   moodImage: {
     width: 50,
     height: 50,
+  },
+  moodLabel: {
+    marginTop: 5,
+    textAlign: 'center',
   },
   commentInput: {
     marginTop: 20,
@@ -93,7 +99,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   saveButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#8965d4',
     marginTop: 20,
     padding: 15,
     borderRadius: 8,
