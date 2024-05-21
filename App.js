@@ -7,7 +7,7 @@ import { AntDesign } from '@expo/vector-icons';
 import LoginScreen from './screens/Login';
 import SignUpScreen from './screens/Signup';
 import ForgotPasswordScreen from './screens/ForgotPassword';
-//import MoodTrackerScreen from './screens/MoodTracker';
+import MoodTrackerScreen from './screens/MoodTracker';
 import ProfileScreen from './screens/Profile';
 import HomeScreen from './screens/Home';
 import ChatScreen from './screens/Chat';
@@ -19,6 +19,11 @@ import BookScreen from './screens/Book';
 import EbookScreen from './screens/Ebook';
 import DocChatScreen from './screens/DocChat';
 import UpdateMAScreen from './screens/AddNewData';
+import EditsongScreen from './screens/Editsong';
+import EditbookScreen from './screens/Editbook';
+import EditEbookScreen from './screens/EditEbook';
+
+
 
 
 const Stack = createStackNavigator();
@@ -33,6 +38,15 @@ const MainTabNavigator = () => {
         options={{
           tabBarIcon: ({ color, size }) => (
             <AntDesign name="hearto" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="MoodTracker"
+        component={MoodTrackerScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name="smileo" size={24} color={color} />
           ),
         }}
       />
@@ -108,6 +122,10 @@ const App = () => {
         <Stack.Screen name="Book" component={BookScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Ebook" component={EbookScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AddNewData" component={UpdateMAScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Editsong" component={EditsongScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Editbook" component={EditbookScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="EditEbook" component={EditEbookScreen} options={{ headerShown: false }} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
