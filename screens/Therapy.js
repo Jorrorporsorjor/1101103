@@ -1,56 +1,106 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, ScrollView } from 'react-native';
-
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 const Theapyscreen = ({ navigation }) => {
     return (
         <View style={styles.container}>
-            <View style={styles.section1}>
-                <Text style={styles.text}>Stress Therapy</Text>
-            </View>
+            <LinearGradient
+                colors={['#8678c1', '#7164b6']}
+                style={styles.section1}
+                start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+            >
+                <Text style={styles.text}>   Stress</Text>
+                <Text style={styles.text2}>   Therapy</Text>
+            </LinearGradient>
             <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-                <TouchableOpacity style={styles.button}
-                    onPress={() => navigation.navigate("Tips")}>
-
+            <LinearGradient
+                  colors={['#dcd9f4', '#dcd9f4']}
+                  style={styles.gradientBackground}
+                  start={{ x: 0, y: 0.5 }}
+                end={{ x: 1, y: 0.5 }}
+                  >  
+                  <Text style={styles.buttonText3}>category</Text>           
+                <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Tips")}>
                     <Text style={styles.buttonText}>TIPS</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.button, { marginTop: 10 }]} onPress={() => navigation.navigate("MA")}>
                     <Text style={styles.buttonText}>MOVIE & ANIMATION</Text>
+                    <Text style={styles.buttonText2} >ภาพยนตร์ และแอนิเมชัน</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("Song")}>
+                
+                <TouchableOpacity style={[styles.button, { marginTop: 10 }]} onPress={() => navigation.navigate("Song")}>
                     <Text style={styles.buttonText}>SONG</Text>
+                    <Text style={styles.buttonText2} >เพลง</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("Book")}>
+                <TouchableOpacity style={[styles.button, { marginTop: 10 }]} onPress={() => navigation.navigate("Book")}>
                     <Text style={styles.buttonText}>BOOK</Text>
+                    <Text style={styles.buttonText2}>หนังสือ</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("Ebook")}>
+                <TouchableOpacity style={[styles.button, { marginTop: 10 }]} onPress={() => navigation.navigate("Ebook")}>
                     <Text style={styles.buttonText}>E-BOOK</Text>
+                    <Text style={styles.buttonText2}>อีบุ๊ก</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("AddNewData")}>
-                    <Text style={styles.buttonText}>UPDATE MOVIE & ANIMATION</Text>
+                <TouchableOpacity style={[styles.button, { marginTop: 10 }]} onPress={() => navigation.navigate("AddMA")}>
+                    <Text style={styles.buttonText}>ADD</Text>
                 </TouchableOpacity>
+                </LinearGradient>
             </ScrollView>
         </View>
     );
 };
 
+
 const styles = StyleSheet.create({
+    gradientBackground: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f4ebdc',
+        width: 400,
+        
+    },
+    
     container: {
         flex: 1,
         flexDirection: 'column',
         justifyContent: 'space-between', // จัดเรียงให้ส่วนบนและส่วนล่างมีระยะห่างเท่ากัน
+        backgroundColor: '#dcd9f4',
+        
+        
     },
     section1: {
-        height: '17%',
-        backgroundColor: '#FFAB7A',
+        height: '19%',
+        backgroundColor: '#f4ebdc',
+        borderTopLeftRadius: 3,
+        borderTopRightRadius: 3,
+        borderBottomRightRadius: 40,
+        borderBottomLeftRadius: 40,
+        shadowColor: '#000', // สีของเงา
+        shadowOffset: { width: 0, height: 2 }, // การเลื่อนของเงา
+        shadowOpacity: 1, // ความทึบของเงา
+        shadowRadius: 2, // รัศมีของเงา
+        elevation: 5, // การยกระดับของเงา (สำหรับ Android)
+        
+        
+        
+    },
+    text2: {
+        fontSize: 30, // ปรับขนาดตัวอักษร
+        color: 'white',
+        fontWeight: 'bold',
+        lineHeight: 30, // ปรับระยะห่างระหว่างบรรทัด
+        marginTop: 0, // เว้นระยะห่างด้านบน
     },
     text: {
-        fontSize: 30, // ปรับขนาดตัวอักษร
-        color: 'black',
+        fontSize: 25, // ปรับขนาดตัวอักษร
+        color: 'white',
         fontWeight: 'bold',
-        lineHeight: 36, // ปรับระยะห่างระหว่างบรรทัด
+        lineHeight: 30, // ปรับระยะห่างระหว่างบรรทัด
         marginTop: 20, // เว้นระยะห่างด้านบน
+        marginBottom: 0, // เว้นระยะห่างด้านล่าง
     },
     scrollViewContainer: {
         flexGrow: 1,// กำหนดให้ส่วนตรงกลางใหญ่สุด
@@ -59,17 +109,38 @@ const styles = StyleSheet.create({
     },
     button: {
         marginTop: 20,
-        width: 350,
-        height: 100,
-        backgroundColor: 'white',
+        width: 330,
+        height: 80,
+        backgroundColor: '#eeeef4',
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 30,
+        shadowColor: '#000', // สีของเงา
+        shadowOffset: { width: 0, height: 2 }, // การเลื่อนของเงา
+        shadowOpacity: 0.8, // ความทึบของเงา
+        shadowRadius: 2, // รัศมีของเงา
+        elevation: 5, // การยกระดับของเงา (สำหรับ Android)
     },
     buttonText: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: 'black',
+        color: '#7164b6',
+        
+    },buttonText2: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#b7aac9',
+        
+    },
+    buttonText3: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#b7aac9',
+        marginTop: 10, // เว้นระยะห่างด้านบน
+        marginBottom: -15, // เว้นระยะห่างด้านล่าง
+        top: 1,
+        left: 100,
+        
     },
 });
 
