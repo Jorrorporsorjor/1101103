@@ -7,7 +7,7 @@ import { AntDesign } from '@expo/vector-icons';
 import LoginScreen from './screens/Login';
 import SignUpScreen from './screens/Signup';
 import ForgotPasswordScreen from './screens/ForgotPassword';
-import MoodTrackerScreen from './screens/MoodTracker';
+//import MoodTrackerScreen from './screens/MoodTracker';
 import ProfileScreen from './screens/Profile';
 import HomeScreen from './screens/Home';
 import ChatScreen from './screens/Chat';
@@ -33,15 +33,6 @@ const MainTabNavigator = () => {
         options={{
           tabBarIcon: ({ color, size }) => (
             <AntDesign name="hearto" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="MoodTracker"
-        component={MoodTrackerScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <AntDesign name="smileo" size={24} color={color} />
           ),
         }}
       />
