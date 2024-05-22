@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image } from 'react-native';
+import { auth, db } from '../config/firebase';
+import { doc, setDoc, collection, query, getDocs } from 'firebase/firestore';
 
-const MoodSelection = ({ onSave }) => {
+const MoodSelection = ({ onSave, selectedDate }) => {
   const [selectedMood, setSelectedMood] = useState(null);
   const [comment, setComment] = useState('');
 
@@ -12,6 +14,27 @@ const MoodSelection = ({ onSave }) => {
     { value: 4, image: require('../pic/emo_good.png'), label: 'Good' },
     { value: 5, image: require('../pic/emo_great.png'), label: 'Great' },
   ];
+
+  const saveMoodData = async () => {
+    const user = auth.currentUser;
+    if (user) {
+      const uid = user.uid;
+      const moodData = {
+        mood: selectedMood,
+        comment,
+        timestamp: new Date(),
+      };
+
+      try {
+        await setDoc(doc(db, 'users', uid, 'moods', selectedDate), moodData);
+        onSave(selectedMood, comment);
+      } catch (error) {
+        console.error('Error saving mood data: ', error);
+      }
+    } else {
+      console.error('No user is signed in');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -35,7 +58,7 @@ const MoodSelection = ({ onSave }) => {
 
       <TextInput
         style={styles.commentInput}
-        placeholder="เพิ่มความคิดเห็น..."
+        placeholder="Add a comment..."
         multiline
         onChangeText={setComment}
         value={comment}
@@ -46,7 +69,7 @@ const MoodSelection = ({ onSave }) => {
           styles.saveButton,
           { opacity: selectedMood !== null ? 1 : 0.5 },
         ]}
-        onPress={() => onSave(selectedMood, comment)}
+        onPress={saveMoodData}
         disabled={selectedMood === null}
       >
         <Text style={styles.saveButtonText}>Save</Text>
