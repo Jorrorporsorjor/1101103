@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Image } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import MoodSelection from './MoodSelection';
 import MoodStatistics from './MoodStatistics';
+import { auth, db } from '../config/firebase';
+import { collection, query, getDocs, doc, setDoc } from 'firebase/firestore';
 
 const HomeScreen = () => {
   const [selectedDate, setSelectedDate] = useState('');
@@ -10,6 +12,26 @@ const HomeScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isViewingMood, setIsViewingMood] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
+
+  useEffect(() => {
+    const fetchUserMoods = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const uid = user.uid;
+        const moodRef = collection(db, 'users', uid, 'moods');
+        const q = query(moodRef);
+        const querySnapshot = await getDocs(q);
+        let moods = {};
+        querySnapshot.forEach((doc) => {
+          moods[doc.id.split('T')[0]] = doc.data();
+        });
+        setMoodData(moods);
+      }
+    };
+
+    const unsubscribe = auth.onAuthStateChanged(fetchUserMoods);
+    return () => unsubscribe();
+  }, []);
 
   const handleMonthChange = (month) => {
     setCurrentMonth(month.dateString.slice(0, 7));
@@ -28,10 +50,21 @@ const HomeScreen = () => {
     }
   };
 
-  const handleSaveMood = (mood, comment) => {
-    const newMoodData = { ...moodData, [selectedDate]: { mood, comment } };
-    setMoodData(newMoodData);
-    setIsModalVisible(false);
+  const handleSaveMood = async (mood, comment) => {
+    const user = auth.currentUser;
+    if (user) {
+      const uid = user.uid;
+      const moodEntry = { mood, comment };
+      const newMoodData = { ...moodData, [selectedDate]: moodEntry };
+
+      try {
+        await setDoc(doc(db, 'users', uid, 'moods', selectedDate), moodEntry);
+        setMoodData(newMoodData);
+        setIsModalVisible(false);
+      } catch (error) {
+        console.error('Error saving mood data: ', error);
+      }
+    }
   };
 
   const handleCloseViewMood = () => {
@@ -75,18 +108,20 @@ const HomeScreen = () => {
           [today]: {
             customStyles: {
               container: {
-                backgroundColor: '#e6ffe6',
+                borderWidth: 2, // Add border width for today's date
+                borderColor: 'red', // Add border color for today's date
+                borderRadius: 5, // Add border radius if you want rounded borders
               },
               text: {
-                color: 'black',
-                fontWeight: 'bold',
+                color: 'black', // Ensure the text color is black
+                fontWeight: 'bold', // Make the text bold
               },
             },
           },
         }}
         dayComponent={({ date, state }) => (
           <TouchableOpacity onPress={() => handleDayPress(date)}>
-            <View style={styles.dayContainer}>
+            <View style={[styles.dayContainer, date.dateString === today && styles.todayContainer]}>
               <Text style={[styles.dayText, state === 'disabled' && styles.disabledText]}>
                 {date.day}
               </Text>
@@ -122,7 +157,7 @@ const HomeScreen = () => {
         animationType="slide"
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <MoodSelection onSave={handleSaveMood} />
+        <MoodSelection onSave={handleSaveMood} selectedDate={selectedDate} />
       </Modal>
 
       <Modal
@@ -167,6 +202,11 @@ const styles = StyleSheet.create({
   dayContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  todayContainer: {
+    borderWidth: 2, // Add border width for today's date
+    borderColor: 'grey', // Add border color for today's date
+    borderRadius: 7, // Add border radius if you want rounded borders
   },
   dayText: {
     fontSize: 16,
