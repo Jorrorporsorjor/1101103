@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { firebase } from '../config/firebase';
 
@@ -13,11 +13,13 @@ const MAScreen = ({ navigation }) => {
       (querySnapshot) => {
         const usersList = [];
         querySnapshot.forEach((doc) => {
-          const { name, title } = doc.data();
+          const { name, Author, description, image } = doc.data(); // Add 'image' to retrieve image URL from Firestore
           usersList.push({
             id: doc.id,
             name,
-            title,
+            Author,
+            description,
+            image,
           });
         });
         setUsers(usersList);
@@ -47,8 +49,13 @@ const MAScreen = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         {users.map((item) => (
           <View key={item.id} style={styles.itemContainer}>
-            <Text>Movie Name: {item.name}</Text>
-            <Text>Movie Title: {item.title}</Text>
+            {/* Display the image */}
+            <Image source={{ uri: item.image }} style={styles.profileImage} />
+            <View style={styles.textContainer}>
+              <Text style={styles.itemText}>Movie Name: {item.name}</Text>
+              <Text style={styles.itemText}>Author: {item.Author}</Text>
+              <Text style={styles.itemText}>Description: {item.description}</Text>
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -59,14 +66,13 @@ const MAScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
   },
   section1: {
     height: '17%',
     backgroundColor: '#FFAB7A',
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative', // Allow positioning of back button
   },
   text: {
     fontSize: 30,
@@ -82,12 +88,26 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   itemContainer: {
-    height: 80,
+    flexDirection: 'row', // Align image and text horizontally
+    alignItems: 'flex-start', // Align items at the top vertically
     width: '80%',
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
     padding: 10,
     marginVertical: 10,
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  textContainer: {
+    flex: 1, // Allow text to take up remaining space
+  },
+  itemText: {
+    fontSize: 16,
+    marginBottom: 5,
   },
   backButton: {
     flexDirection: 'row',
