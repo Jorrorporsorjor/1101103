@@ -120,7 +120,7 @@ const EditsongScreen = ({ navigation, image, userId }) => {
 
         const imageName = `${userId}_${new Date().getTime()}`;
 
-        const ref = firebase.storage().ref().child(`Esongpicture/${imageName}`);
+        const ref = firebase.storage().ref().child(`songpicture/${imageName}`);
         const snapshot = await ref.put(blob);
         const profilePictureUrl = await snapshot.ref.getDownloadURL();
 
