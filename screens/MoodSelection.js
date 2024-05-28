@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image, Animated } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebase';
-import { doc, setDoc, collection, query, getDocs } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 const MoodSelection = ({ onSave, selectedDate }) => {
+  const navigation = useNavigation();
   const [selectedMood, setSelectedMood] = useState(null);
   const [comment, setComment] = useState('');
 
@@ -38,27 +40,27 @@ const MoodSelection = ({ onSave, selectedDate }) => {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.closeButton} onPress={() => navigation.navigate('Home')}>
+        <Text style={styles.closeButtonText}>×</Text>
+      </TouchableOpacity>
+
       <Text style={styles.title}>How are you?</Text>
 
       <View style={styles.moodContainer}>
         {moods.map((mood) => (
-          <TouchableOpacity
+          <AnimatedMoodIcon
             key={mood.value}
-            style={[
-              styles.moodIcon,
-              selectedMood === mood.value && styles.selectedMood,
-            ]}
-            onPress={() => setSelectedMood(mood.value)}
-          >
-            <Image source={mood.image} style={styles.moodImage} />
-            <Text style={styles.moodLabel}>{mood.label}</Text>
-          </TouchableOpacity>
+            mood={mood}
+            isSelected={selectedMood === mood.value}
+            onSelect={() => setSelectedMood(mood.value)}
+          />
         ))}
       </View>
 
       <TextInput
         style={styles.commentInput}
         placeholder="Add a comment..."
+        placeholderTextColor="#888"
         multiline
         onChangeText={setComment}
         value={comment}
@@ -78,17 +80,65 @@ const MoodSelection = ({ onSave, selectedDate }) => {
   );
 };
 
+const AnimatedMoodIcon = ({ mood, isSelected, onSelect }) => {
+  const animation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(animation, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(animation, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, [animation]);
+
+  const scale = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.2],
+  });
+
+  return (
+    <TouchableOpacity
+      style={[styles.moodIcon, isSelected && styles.selectedMood]}
+      onPress={onSelect}
+    >
+      <Animated.Image source={mood.image} style={[styles.moodImage, { transform: [{ scale }] }]} />
+      <Text style={styles.moodLabel}>{mood.label}</Text>
+    </TouchableOpacity>
+  );
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f0f0f0',
     justifyContent: 'center',
   },
+  closeButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
+  },
+  closeButtonText: {
+    fontSize: 30,
+    color: '#333',
+  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     marginBottom: 20,
     textAlign: 'center',
+    color: '#0B0428',
+    fontWeight: 'bold',
   },
   moodContainer: {
     flexDirection: 'row',
@@ -98,19 +148,21 @@ const styles = StyleSheet.create({
   moodIcon: {
     alignItems: 'center',
     padding: 10,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   selectedMood: {
-    borderWidth: 2,
     borderColor: '#8965d4',
-    borderRadius: 10,
   },
   moodImage: {
-    width: 50,
-    height: 50,
+    width: 60,
+    height: 60,
   },
   moodLabel: {
     marginTop: 5,
     textAlign: 'center',
+    color: '#333',
   },
   commentInput: {
     marginTop: 20,
@@ -120,17 +172,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     height: 100,
     textAlignVertical: 'top',
+    backgroundColor: '#fff',
   },
   saveButton: {
-    backgroundColor: '#8965d4',
+    backgroundColor: '#0B0428',
     marginTop: 20,
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   saveButtonText: {
     color: '#ffffff',
     fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 
