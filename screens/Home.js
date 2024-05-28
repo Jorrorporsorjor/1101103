@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Image, ImageBackground} from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Image, ImageBackground, Animated } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import MoodSelection from './MoodSelection';
 import MoodStatistics from './MoodStatistics';
 import { auth, db } from '../config/firebase';
 import { collection, query, getDocs, doc, setDoc } from 'firebase/firestore';
+import { DeviceMotion } from 'expo-sensors';
 
 const HomeScreen = () => {
   const [selectedDate, setSelectedDate] = useState('');
@@ -12,6 +13,8 @@ const HomeScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isViewingMood, setIsViewingMood] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
+  const moveAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const fetchUserMoods = async () => {
@@ -32,6 +35,45 @@ const HomeScreen = () => {
     const unsubscribe = auth.onAuthStateChanged(fetchUserMoods);
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    DeviceMotion.addListener((motionData) => {
+      if (motionData.acceleration && isViewingMood) {
+        const { x, y, z } = motionData.acceleration;
+        const magnitude = Math.sqrt(x * x + y * y + z * z);
+        if (magnitude > 1.5) { // Adjust the threshold as necessary
+          shakeImage();
+        }
+      }
+    });
+    DeviceMotion.setUpdateInterval(100);
+
+    return () => {
+      DeviceMotion.removeAllListeners();
+    };
+  }, [isViewingMood]);
+
+  useEffect(() => {
+    const startAnimation = () => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(moveAnimation, { toValue: 1, duration: 2000, useNativeDriver: true }),
+          Animated.timing(moveAnimation, { toValue: 0, duration: 2000, useNativeDriver: true }),
+        ])
+      ).start();
+    };
+
+    startAnimation();
+  }, [moveAnimation]);
+
+  const shakeImage = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnimation, { toValue: 1, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: -1, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 1, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  };
 
   const handleMonthChange = (month) => {
     setCurrentMonth(month.dateString.slice(0, 7));
@@ -85,10 +127,24 @@ const HomeScreen = () => {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-<ImageBackground source={require('../pic/B16.gif')} style={styles.background} resizeMode="cover">
-  <View style={styles.container}>
-      <Image source={require('../pic/logo1.png')} style={styles.logo} />
-        {/* เนื่องจากรูปพื้นหลังอยู่นอกขอบเขตของ Calendar และส่วนของข้อมูล คุณต้องให้มันแสดงเป็นพื้นหลังของทั้งหน้าจอ */}
+    <ImageBackground source={require('../pic/B16.gif')} style={styles.background} resizeMode="cover">
+      <View style={styles.container}>
+        <Animated.Image
+          source={require('../pic/logo1.png')}
+          style={[
+            styles.logo,
+            {
+              transform: [
+                {
+                  translateY: moveAnimation.interpolate({
+                    inputRange: [0, 200],
+                    outputRange: [0, 1000], // Adjust the movement distance as needed
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
         <Calendar
           style={styles.calendarStyle}
           onDayPress={handleDayPress}
@@ -101,7 +157,7 @@ const HomeScreen = () => {
                     backgroundColor: 'transparent',
                   },
                   text: {
-                    color: 'white', // Change text color to white
+                    color: 'white',
                   },
                 },
               };
@@ -115,7 +171,7 @@ const HomeScreen = () => {
                   borderRadius: 5,
                 },
                 text: {
-                  color: 'white', // Change text color to white
+                  color: 'white',
                   fontWeight: 'bold',
                 },
               },
@@ -135,24 +191,24 @@ const HomeScreen = () => {
           )}
           markingType={'custom'}
           theme={{
-            calendarBackground: '#0B0428', 
-            textSectionTitleColor: '#ffffff', 
+            calendarBackground: '#0B0428',
+            textSectionTitleColor: '#ffffff',
             selectedDayBackgroundColor: '#00adf5',
             selectedDayTextColor: '#ffffff',
             todayTextColor: '#00adf5',
-            dayTextColor: '#ffffff', 
+            dayTextColor: '#ffffff',
             textDisabledColor: '#d9e1e8',
-            monthTextColor: '#ffffff', 
-            arrowColor: 'white', 
+            monthTextColor: '#ffffff',
+            arrowColor: 'white',
           }}
         />
-  
+
         {Object.keys(filteredMoodData).length > 0 ? (
           <MoodStatistics moodData={filteredMoodData} />
         ) : (
           <Text style={styles.noDataText}>No mood data for this month.</Text>
         )}
-  
+
         <Modal
           visible={isModalVisible}
           transparent={true}
@@ -161,7 +217,7 @@ const HomeScreen = () => {
         >
           <MoodSelection onSave={handleSaveMood} selectedDate={selectedDate} />
         </Modal>
-  
+
         <Modal
           visible={isViewingMood}
           transparent={true}
@@ -173,7 +229,19 @@ const HomeScreen = () => {
               <Text style={styles.modalTitle}>Mood on {selectedDate}</Text>
               {moodData[selectedDate] && (
                 <>
-                  <Image source={getMoodDetails(moodData[selectedDate].mood).image} style={styles.largeMoodIcon} />
+                  <Animated.Image
+                    source={getMoodDetails(moodData[selectedDate].mood).image}
+                    style={[styles.largeMoodIcon, {
+                      transform: [
+                        {
+                          translateX: shakeAnimation.interpolate({
+                            inputRange: [-10, 1001],
+                            outputRange: [-205, 205],
+                          }),
+                        },
+                      ],
+                    }]}
+                  />
                   <Text style={styles.moodLabel}>{getMoodDetails(moodData[selectedDate].mood).label}</Text>
                   <Text style={styles.modalComment}>{moodData[selectedDate].comment}</Text>
                 </>
@@ -185,18 +253,15 @@ const HomeScreen = () => {
           </View>
         </Modal>
         
-    </View>
+      </View>
     </ImageBackground>
-
   );
-  
 };
 
 const styles = StyleSheet.create({
   calendarStyle: {
-    borderRadius: 35, // Rounded corners
-    
-    overflow: 'hidden', // Ensures that child components do not overflow the rounded borders
+    borderRadius: 35,
+    overflow: 'hidden',
   },
   background: {
     flex: 1,
@@ -222,11 +287,11 @@ const styles = StyleSheet.create({
   todayContainer: {
     borderWidth: 2,
     borderColor: 'grey',
-    borderRadius: 20,  // เพิ่มหรือปรับค่านี้
+    borderRadius: 20,
   },
   dayText: {
     fontSize: 16,
-    color: 'white', // Change text color to white
+    color: 'white',
   },
   disabledText: {
     color: 'gray',
@@ -279,7 +344,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     backgroundColor: 'white',
-
   },
   closeButton: {
     marginTop: 20,
@@ -293,10 +357,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   logo: {
-    width: 400, // ความกว้างที่ต้องการ
-    height: 60, // ความสูงที่ต้องการ
-    alignSelf: 'center', // จัดกลางตามแกนแนวนอน
-    marginBottom: 30, // ระยะห่างจากส่วนต่อไป
+    width: 400,
+    height: 60,
+    alignSelf: 'center',
+    marginBottom: 30,
   }
 });
 
