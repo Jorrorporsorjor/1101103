@@ -10,7 +10,7 @@ import ForgotPasswordScreen from './screens/ForgotPassword';
 import MoodTrackerScreen from './screens/Admintherapy';
 import ProfileScreen from './screens/Profile';
 import HomeScreen from './screens/Home';
-import ChatScreen from './screens/Chat';
+import TopicScreen from './screens/Topic';
 import TherapyScreen from './screens/Therapy';
 import TipsScreen from './screens/Tips';
 import MAScreen from './screens/MA';
@@ -52,8 +52,8 @@ const MainTabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Chat"
-        component={ChatScreen}
+        name="Topic"
+        component={TopicScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
             <AntDesign name="mail" size={24} color={color} />
@@ -110,24 +110,24 @@ const AdminNavigator = () => {
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Admintabs">
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignUpScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-        <Stack.Screen name="MainTabs" component={MainTabNavigator} options={{ headerShown: false }} />
-        <Stack.Screen name="Admintabs" component={AdminNavigator} options={{ headerShown: false }} />
-        <Stack.Screen name="Tips" component={TipsScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Therapy" component={TherapyScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="MA" component={MAScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Song" component={SongScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Book" component={BookScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Ebook" component={EbookScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AddNewData" component={EditmovieScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Editsong" component={EditsongScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Editbook" component={EditbookScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="EditEbook" component={EditEbookScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Edittips" component={EdittipsScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AdminTheapy" component={AdminNavigator} options={{ headerShown: false }} />
+        <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+        <Stack.Screen name="Admintabs" component={AdminNavigator} />
+        <Stack.Screen name="Tips" component={TipsScreen} />
+        <Stack.Screen name="Therapy" component={TherapyScreen} />
+        <Stack.Screen name="MA" component={MAScreen} />
+        <Stack.Screen name="Song" component={SongScreen} />
+        <Stack.Screen name="Book" component={BookScreen} />
+        <Stack.Screen name="Ebook" component={EbookScreen} />
+        <Stack.Screen name="AddNewData" component={EditmovieScreen} />
+        <Stack.Screen name="Editsong" component={EditsongScreen} />
+        <Stack.Screen name="Editbook" component={EditbookScreen} />
+        <Stack.Screen name="EditEbook" component={EditEbookScreen} />
+        <Stack.Screen name="Edittips" component={EdittipsScreen} />
+        <Stack.Screen name="AdminTheapy" component={AdminNavigator} />
 
       </Stack.Navigator>
     </NavigationContainer>
