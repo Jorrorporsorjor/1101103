@@ -32,7 +32,7 @@ const Tab = createBottomTabNavigator();
 
 const MainTabNavigator = () => {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator screenOptions={{ headerShown: false }>
       <Tab.Screen
         name="Home"
         component={HomeScreen}
@@ -84,7 +84,7 @@ const MainTabNavigator = () => {
 
 const AdminNavigator = () => {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator screenOptions={{ headerShown: false }>
       <Tab.Screen
         name="AdminTherapy"
         component={AdminTherapyscreen}
