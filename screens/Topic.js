@@ -1,5 +1,3 @@
-// screens/TopicScreen.js
-
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Modal } from 'react-native';
 import { db } from '../config/firebase';
@@ -21,21 +19,31 @@ const TopicScreen = () => {
   useEffect(() => {
     const auth = getAuth();
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+      if (user) {
+        const displayName = user.displayName || generateRandomUsername();
+        setUser({
+          uid: user.uid,
+          displayName,
+        });
+      } else {
+        setUser(null);
+      }
     });
 
     const q = query(collection(db, 'topics'), orderBy('createdAt', 'asc'));
     const unsubscribeTopics = onSnapshot(q, (querySnapshot) => {
-      const topics = querySnapshot.docs.map(doc => {
+      const topics = querySnapshot.docs.map((doc) => {
         const firebaseData = doc.data();
-
         const data = {
           id: doc.id,
           likes: [],
           comments: [],
-          ...firebaseData
+          ...firebaseData,
+          user: {
+            id: firebaseData.user.id,
+            name: firebaseData.user.name,
+          },
         };
-
         return data;
       });
 
@@ -48,6 +56,14 @@ const TopicScreen = () => {
       unsubscribeTopics();
     };
   }, []);
+
+  const generateRandomUsername = () => {
+    const adjectives = ["Cool", "Super", "Happy", "Funky", "Brave"];
+    const nouns = ["Tiger", "Eagle", "Lion", "Panther", "Wolf"];
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    return `${adjective}${noun}`;
+  };
 
   const handlePost = async () => {
     if (inputText.trim() === '') {
@@ -64,10 +80,10 @@ const TopicScreen = () => {
       createdAt: new Date().getTime(),
       user: {
         id: user.uid,
-        name: user.displayName || 'Anonymous',
+        name: user.displayName,
       },
       likes: [],
-      comments: []
+      comments: [],
     };
 
     try {
@@ -87,11 +103,11 @@ const TopicScreen = () => {
     }
 
     const topicRef = doc(db, 'topics', topicId);
-    const topic = topics.find(t => t.id === topicId);
+    const topic = topics.find((t) => t.id === topicId);
     const userId = user.uid;
 
     const likes = topic.likes.includes(userId)
-      ? topic.likes.filter(id => id !== userId)
+      ? topic.likes.filter((id) => id !== userId)
       : [...topic.likes, userId];
 
     try {
@@ -107,18 +123,18 @@ const TopicScreen = () => {
       alert('You must be logged in to comment');
       return;
     }
-  
+
     const topicRef = doc(db, 'topics', topicId);
-    const topic = topics.find(t => t.id === topicId);
+    const topic = topics.find((t) => t.id === topicId);
     const newComment = {
       text: commentText,
       user: {
         id: user.uid,
-        name: user.displayName || 'Anonymous',
+        name: user.displayName,
       },
-      createdAt: new Date().getTime()
+      createdAt: new Date().getTime(),
     };
-  
+
     try {
       await updateDoc(topicRef, { comments: [...topic.comments, newComment] });
     } catch (error) {
@@ -187,20 +203,21 @@ const TopicScreen = () => {
           topics.map((topic) => (
             <View key={topic.id} style={styles.topicCard}>
               <Text style={styles.topicText}>{topic.text}</Text>
+              <Text style={styles.topicUser}>Posted by: {topic.user.name}</Text>
               <View style={styles.topicFooter}>
                 <View style={styles.iconContainer}>
                   <TouchableOpacity onPress={() => handleLike(topic.id)} style={styles.iconButton}>
-                    <Ionicons name={topic.likes.includes(user?.uid) ? "heart" : "heart-outline"} size={24} color="#e74c3c" />
+                    <Ionicons name={topic.likes.includes(user?.uid) ? 'heart' : 'heart-outline'} size={24} color="#e74c3c" />
                     <Text style={styles.iconText}>{topic.likes.length}</Text>
                   </TouchableOpacity>
                   {user && user.uid === topic.user.id && (
                     <>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         onPress={() => {
                           setEditTopic(topic);
                           setEditText(topic.text);
                           setEditModalVisible(true);
-                        }} 
+                        }}
                         style={styles.iconButton}
                       >
                         <Ionicons name="pencil-outline" size={24} color="#f39c12" />
@@ -229,10 +246,7 @@ const TopicScreen = () => {
           ))
         )}
       </ScrollView>
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setModalVisible(true)}
-      >
+      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
         <Ionicons name="add" size={28} color="white" />
       </TouchableOpacity>
       <Modal
@@ -251,7 +265,6 @@ const TopicScreen = () => {
               value={inputText}
               onChangeText={setInputText}
               placeholder="Write your topic here..."
-              multiline
             />
             <TouchableOpacity style={styles.modalPostButton} onPress={handlePost}>
               <Text style={styles.postButtonText}>Post</Text>
@@ -280,8 +293,7 @@ const TopicScreen = () => {
               style={styles.input}
               value={editText}
               onChangeText={setEditText}
-              placeholder="Edit your topic..."
-              multiline
+              placeholder="Edit your topic here..."
             />
             <TouchableOpacity style={styles.modalPostButton} onPress={handleEdit}>
               <Text style={styles.postButtonText}>Save</Text>
@@ -327,6 +339,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 10,
     color: '#333',
+  },
+  topicUser: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 10,
   },
   topicFooter: {
     borderTopWidth: 1,
@@ -423,9 +440,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     marginVertical: 10,
+    borderRadius: 20,
   },
   modalCloseButton: {
     backgroundColor: '#e74c3c',
+    borderRadius: 20,
   },
   textStyle: {
     color: 'white',
@@ -443,7 +462,6 @@ const styles = StyleSheet.create({
   postButtonText: {
     color: '#fff',
     fontSize: 16,
-    
   },
 });
 
