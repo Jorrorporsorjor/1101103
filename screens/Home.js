@@ -5,7 +5,6 @@ import MoodSelection from './MoodSelection';
 import MoodStatistics from './MoodStatistics';
 import { auth, db } from '../config/firebase';
 import { collection, query, getDocs, doc, setDoc } from 'firebase/firestore';
-import { DeviceMotion } from 'expo-sensors';
 
 const HomeScreen = () => {
   const [selectedDate, setSelectedDate] = useState('');
@@ -13,7 +12,6 @@ const HomeScreen = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isViewingMood, setIsViewingMood] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
-  const shakeAnimation = useRef(new Animated.Value(0)).current;
   const moveAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -37,23 +35,6 @@ const HomeScreen = () => {
   }, []);
 
   useEffect(() => {
-    DeviceMotion.addListener((motionData) => {
-      if (motionData.acceleration && isViewingMood) {
-        const { x, y, z } = motionData.acceleration;
-        const magnitude = Math.sqrt(x * x + y * y + z * z);
-        if (magnitude > 1.5) { // Adjust the threshold as necessary
-          shakeImage();
-        }
-      }
-    });
-    DeviceMotion.setUpdateInterval(100);
-
-    return () => {
-      DeviceMotion.removeAllListeners();
-    };
-  }, [isViewingMood]);
-
-  useEffect(() => {
     const startAnimation = () => {
       Animated.loop(
         Animated.sequence([
@@ -65,15 +46,6 @@ const HomeScreen = () => {
 
     startAnimation();
   }, [moveAnimation]);
-
-  const shakeImage = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnimation, { toValue: 1, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: -1, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: 1, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
-    ]).start();
-  };
 
   const handleMonthChange = (month) => {
     setCurrentMonth(month.dateString.slice(0, 7));
@@ -229,18 +201,9 @@ const HomeScreen = () => {
               <Text style={styles.modalTitle}>Mood on {selectedDate}</Text>
               {moodData[selectedDate] && (
                 <>
-                  <Animated.Image
+                  <Image
                     source={getMoodDetails(moodData[selectedDate].mood).image}
-                    style={[styles.largeMoodIcon, {
-                      transform: [
-                        {
-                          translateX: shakeAnimation.interpolate({
-                            inputRange: [-10, 1001],
-                            outputRange: [-205, 205],
-                          }),
-                        },
-                      ],
-                    }]}
+                    style={styles.largeMoodIcon}
                   />
                   <Text style={styles.moodLabel}>{getMoodDetails(moodData[selectedDate].mood).label}</Text>
                   <Text style={styles.modalComment}>{moodData[selectedDate].comment}</Text>
@@ -252,7 +215,6 @@ const HomeScreen = () => {
             </View>
           </View>
         </Modal>
-        
       </View>
     </ImageBackground>
   );
@@ -343,7 +305,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     color: '#666',
-    backgroundColor: 'white',
   },
   closeButton: {
     marginTop: 20,
@@ -361,6 +322,7 @@ const styles = StyleSheet.create({
     height: 60,
     alignSelf: 'center',
     marginBottom: 30,
+    marginTop: 70,
   }
 });
 
