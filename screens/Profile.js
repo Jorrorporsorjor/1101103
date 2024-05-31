@@ -1,55 +1,69 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,Image } from 'react-native';
 import { updateDoc, doc } from "firebase/firestore";
 import { firestore } from '../config/firebase';
+import * as ImagePicker from 'expo-image-picker';
+import { auth, db } from '../config/firebase';
+import { signOut } from 'firebase/auth';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }) => {
     const [name, setName] = useState(null);
     const [dob, setDob] = useState(null);
-    
+    const [image, setImage] = useState('');
 
-  const handleSaveChanges = async () => {
-    try {
-      const userDocRef = doc(firestore, "user", "CbO6BHDSqIsI5kE08o4A"); // เปลี่ยน USER_ID_HERE เป็น ID ของผู้ใช้
-      await updateDoc(userDocRef, {
-        name: name,
-        dob: dob
-      });
-      Alert.alert('Changes Saved', 'Your profile has been updated successfully');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      Alert.alert('Error', 'Failed to update profile. Please try again later.');
-    }
+    
+  const handleLogOut = async () => {
+    Alert.alert('Confirm Logout', 'Are you sure you want to log out?', [
+      {
+        text: 'Cancel',
+        onPress: () => {},
+        style: 'cancel',
+      },
+      {
+        text: 'OK',
+        onPress: async () => {
+          await signOut(auth);
+          navigation.navigate('Login');
+          console.log('LOG OUT');
+        },
+      },
+    ]);
   };
 
+    const pickImage = async () => {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+  
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+      }
+    };
+
+  
+
   return (
-    
+ 
     <View style={styles.container}>
+       <Image style={styles.profileImage}
+      source={{ uri: image ? image : 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}  ></Image>
+      
+      
       <Text style={styles.title}>User Profile</Text>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Name:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your name"
-          value={name}
-          onChangeText={setName}
-        />
+      <TouchableOpacity style={styles.button} onPress={pickImage}>
+            <Text style={styles.buttonText}>Change Profile Picture</Text>
+          </TouchableOpacity>
       </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Date of Birth:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="YYYY-MM-DD"
-          value={dob}
-          onChangeText={setDob}
-        />
-      </View>
+      <TouchableOpacity style={styles.button} onPress={handleLogOut}>
+            <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleSaveChanges}>
-        <Text style={styles.buttonText}>Save Changes</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -92,6 +106,12 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#ffffff',
     fontSize: 18,
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'skyblue',
   },
 });
 
