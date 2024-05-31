@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Image, ImageBackground, Animated } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import MoodSelection from './MoodSelection';
@@ -47,22 +47,24 @@ const HomeScreen = () => {
     startAnimation();
   }, [moveAnimation]);
 
-  const handleMonthChange = (month) => {
+  const handleMonthChange = useCallback((month) => {
     setCurrentMonth(month.dateString.slice(0, 7));
-  };
+  }, []);
 
-  const filteredMoodData = Object.fromEntries(
-    Object.entries(moodData).filter(([date]) => date.startsWith(currentMonth))
-  );
+  const filteredMoodData = useMemo(() => {
+    return Object.fromEntries(
+      Object.entries(moodData).filter(([date]) => date.startsWith(currentMonth))
+    );
+  }, [moodData, currentMonth]);
 
-  const handleDayPress = (day) => {
+  const handleDayPress = useCallback((day) => {
     setSelectedDate(day.dateString);
     if (moodData[day.dateString]) {
       setIsViewingMood(true);
     } else {
       setIsModalVisible(true);
     }
-  };
+  }, [moodData]);
 
   const handleSaveMood = async (mood, comment) => {
     const user = auth.currentUser;
@@ -81,9 +83,9 @@ const HomeScreen = () => {
     }
   };
 
-  const handleCloseViewMood = () => {
+  const handleCloseViewMood = useCallback(() => {
     setIsViewingMood(false);
-  };
+  }, []);
 
   const getMoodDetails = (mood) => {
     const moodDetails = {
@@ -109,8 +111,8 @@ const HomeScreen = () => {
               transform: [
                 {
                   translateY: moveAnimation.interpolate({
-                    inputRange: [0, 200],
-                    outputRange: [0, 1000], // Adjust the movement distance as needed
+                    inputRange: [0, 1],
+                    outputRange: [0, 10], // Adjust the movement distance as needed
                   }),
                 },
               ],
@@ -233,7 +235,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'white',
   },
   title: {
     fontSize: 20,
@@ -305,6 +307,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     color: '#666',
+    backgroundColor: 'white',
   },
   closeButton: {
     marginTop: 20,
@@ -322,7 +325,6 @@ const styles = StyleSheet.create({
     height: 60,
     alignSelf: 'center',
     marginBottom: 30,
-    marginTop: 70,
   }
 });
 
