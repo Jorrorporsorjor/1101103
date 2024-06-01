@@ -294,11 +294,12 @@ const TopicScreen = () => {
           topics.map((topic) => (
             <View key={topic.id} style={styles.topicCard}>
               <Text style={styles.topicText}>{topic.text}</Text>
+              <Text style={styles.topicUser}> {topic.user.name}</Text>
               {topic.imageUrl && <Image source={{ uri: topic.imageUrl }} style={styles.topicImage} />}
-              <Text style={styles.topicUser}>Posted by: {topic.user.name}</Text>
+             
               <View style={styles.topicFooter}>
                 <TouchableOpacity onPress={() => handleLike(topic.id)} style={styles.iconButton}>
-                  <Ionicons name={topic.likes.includes(user?.uid) ? 'heart' : 'heart-outline'} size={24} color="#e74c3c" />
+                  <Ionicons name={topic.likes.includes(user?.uid) ? 'heart' : 'heart-outline'} size={24} color="#786bbc" />
                   <Text style={styles.iconText}>{topic.likes.length}</Text>
                 </TouchableOpacity>
                 {user && user.uid === topic.user.id && (
@@ -311,10 +312,10 @@ const TopicScreen = () => {
                       }}
                       style={styles.iconButton}
                     >
-                      <Ionicons name="pencil-outline" size={24} color="#f39c12" />
+                      <Ionicons name="pencil-outline" size={24} color="#786bbc"  style={styles.pen}/>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDelete(topic.id)} style={styles.iconButton}>
-                      <Ionicons name="trash-outline" size={24} color="#e74c3c" />
+                      <Ionicons name="trash-outline" size={24} color="#ccc" />
                     </TouchableOpacity>
                   </>
                 )}
@@ -327,7 +328,7 @@ const TopicScreen = () => {
                       <Text style={styles.commentUser}>- {comment.user.name}</Text>
                       {user && user.uid === comment.user.id && (
                         <TouchableOpacity onPress={() => handleDeleteComment(topic.id, index)} style={styles.iconButton}>
-                          <Ionicons name="trash-outline" size={16} color="#e74c3c" />
+                          <Ionicons name="trash-outline" size={16} color="#ccc" />
                         </TouchableOpacity>
                       )}
                     </View>
@@ -425,25 +426,40 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   topicCard: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#eeeef4',
     borderRadius: 10,
     padding: 15,
     marginBottom: 20,
+    shadowColor: '#000', // สีของเงา
+    shadowOffset: { width: 0, height: 2 }, // การเลื่อนของเงา
+    shadowOpacity: 0.8, // ความทึบของเงา
+    shadowRadius: 2, // รัศมีของเงา
+    elevation: 5, // การยกระดับของเงา (สำหรับ Android)
   },
   topicText: {
     fontSize: 18,
     marginBottom: 10,
+    top: 30,
   },
   topicImage: {
-    width: '100%',
+    width: 353,
     height: 200,
-    borderRadius: 10,
-    marginBottom: 10,
+    borderRadius: 0,
+    marginBottom: -23,
+    top: -37,
+    left: -15,
   },
+  pen: {
+    
+    
+  },
+
   topicUser: {
     fontSize: 14,
-    color: '#888',
+    color: '#2B234C',
     marginBottom: 10,
+    top: -37,
+    
   },
   topicFooter: {
     flexDirection: 'row',
@@ -452,6 +468,7 @@ const styles = StyleSheet.create({
   iconButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    
   },
   iconText: {
     marginLeft: 5,
@@ -479,7 +496,7 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     marginTop: 10,
-    borderRadius: 5,
+    borderRadius: 20,
     borderColor: '#ccc',
     borderWidth: 1,
     padding: 10,
@@ -488,7 +505,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     right: 30,
-    backgroundColor: '#007bff',
+    backgroundColor: '#786bbc',
     borderRadius: 50,
     padding: 15,
     elevation: 3,
