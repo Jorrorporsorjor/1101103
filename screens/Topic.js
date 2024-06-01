@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Modal, Animated } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Modal, Image } from 'react-native';
 import { db } from '../config/firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
 
 const TopicScreen = () => {
   const [topics, setTopics] = useState([]);
   const [inputText, setInputText] = useState('');
+  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -15,7 +19,6 @@ const TopicScreen = () => {
   const [editTopic, setEditTopic] = useState(null);
   const [editText, setEditText] = useState('');
   const scrollViewRef = useRef();
-  const moveAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const auth = getAuth();
@@ -66,8 +69,27 @@ const TopicScreen = () => {
     return `${adjective}${noun}`;
   };
 
+  const handleImagePick = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera permissions to make this work!');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
   const handlePost = async () => {
-    if (inputText.trim() === '') {
+    if (inputText.trim() === '' && !image) {
       return;
     }
 
@@ -76,8 +98,27 @@ const TopicScreen = () => {
       return;
     }
 
+    let imageUrl = null;
+    const imageName = `${user.uid}_${new Date().getTime()}`;
+
+    if (image) {
+      try {
+        const response = await fetch(image);
+        const blob = await response.blob();
+
+        const storageRef = ref(getStorage(), `TopicPictures/${imageName}`);
+        await uploadBytes(storageRef, blob);
+        imageUrl = await getDownloadURL(storageRef);
+      } catch (error) {
+        console.error('Error uploading image: ', error);
+        alert('Failed to upload image');
+        return;
+      }
+    }
+
     const newTopic = {
       text: inputText,
+      imageUrl,
       createdAt: new Date().getTime(),
       user: {
         id: user.uid,
@@ -90,6 +131,7 @@ const TopicScreen = () => {
     try {
       await addDoc(collection(db, 'topics'), newTopic);
       setInputText('');
+      setImage(null);
       setModalVisible(false);
       scrollViewRef.current.scrollToEnd({ animated: true });
     } catch (error) {
@@ -193,24 +235,7 @@ const TopicScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Animated.Image
-          source={require('../pic/topic1.png')}
-          style={[
-            styles.logo,
-            {
-              transform: [
-                {
-                  translateY: moveAnimation.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 10], // Adjust the movement distance as needed
-                  }),
-                },
-              ],
-            },
-          ]}
-        />
       <ScrollView
-      
         ref={scrollViewRef}
         onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
         contentContainerStyle={styles.topicsContainer}
@@ -221,106 +246,99 @@ const TopicScreen = () => {
           topics.map((topic) => (
             <View key={topic.id} style={styles.topicCard}>
               <Text style={styles.topicText}>{topic.text}</Text>
+              {topic.imageUrl && (
+                <Image source={{ uri: topic.imageUrl }} style={styles.topicImage} />
+              )}
               <Text style={styles.topicUser}>Posted by: {topic.user.name}</Text>
               <View style={styles.topicFooter}>
-                <View style={styles.iconContainer}>
-                  <TouchableOpacity onPress={() => handleLike(topic.id)} style={styles.iconButton}>
-                    <Ionicons name={topic.likes.includes(user?.uid) ? 'heart' : 'heart-outline'} size={24} color="#e74c3c" />
-                    <Text style={styles.iconText}>{topic.likes.length}</Text>
-                  </TouchableOpacity>
-                  {user && user.uid === topic.user.id && (
-                    <>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setEditTopic(topic);
-                          setEditText(topic.text);
-                          setEditModalVisible(true);
-                        }}
-                        style={styles.iconButton}
-                      >
-                        <Ionicons name="pencil-outline" size={24} color="#f39c12" />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleDelete(topic.id)} style={styles.iconButton}>
-                        <Ionicons name="trash-outline" size={24} color="#e74c3c" />
-                      </TouchableOpacity>
-                    </>
-                  )}
-                </View>
-                <View style={styles.commentsContainer}>
-                  {topic.comments.map((comment, index) => (
-                    <View key={index} style={styles.comment}>
-                      <Text style={styles.commentText}>{comment.text}</Text>
-                      <Text style={styles.commentUser}>- {comment.user.name}</Text>
-                    </View>
-                  ))}
-                </View>
-                <TextInput
-                  style={styles.commentInput}
-                  placeholder="Add a comment..."
-                  onSubmitEditing={(event) => handleComment(topic.id, event.nativeEvent.text)}
-                />
+                <TouchableOpacity onPress={() => handleLike(topic.id)} style={styles.iconButton}>
+                  <Ionicons name={topic.likes.includes(user?.uid) ? 'heart' : 'heart-outline'} size={24} color="#e74c3c" />
+                  <Text style={styles.iconText}>{topic.likes.length}</Text>
+                </TouchableOpacity>
+                {user && user.uid === topic.user.id && (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setEditTopic(topic);
+                        setEditText(topic.text);
+                        setEditModalVisible(true);
+                      }}
+                      style={styles.iconButton}
+                    >
+                      <Ionicons name="pencil-outline" size={24} color="#f39c12" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDelete(topic.id)} style={styles.iconButton}>
+                      <Ionicons name="trash-outline" size={24} color="#e74c3c" />
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
+              <View style={styles.commentsContainer}>
+                {topic.comments.map((comment, index) => (
+                  <View key={index} style={styles.comment}>
+                    <Text style={styles.commentText}>{comment.text}</Text>
+                    <Text style={styles.commentUser}>- {comment.user.name}</Text>
+                  </View>
+                ))}
+              </View>
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Add a comment..."
+                onSubmitEditing={(event) => handleComment(topic.id, event.nativeEvent.text)}
+              />
             </View>
           ))
         )}
       </ScrollView>
-      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
-        <Ionicons name="add" size={28} color="white" />
+      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+        <Ionicons name="add-outline" size={36} color="#fff" />
       </TouchableOpacity>
       <Modal
-        animationType="slide"
-        transparent={true}
         visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Create a New Topic</Text>
-            <TextInput
-              style={styles.input}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Write your topic here..."
-            />
-            <TouchableOpacity style={styles.modalPostButton} onPress={handlePost}>
-              <Text style={styles.postButtonText}>Post</Text>
+          <Text style={styles.modalTitle}>Create New Topic</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your topic..."
+            value={inputText}
+            onChangeText={setInputText}
+          />
+          {image && <Image source={{ uri: image }} style={styles.previewImage} />}
+          <TouchableOpacity style={styles.imagePickerButton} onPress={handleImagePick}>
+            <Text style={styles.imagePickerButtonText}>Pick an image</Text>
+          </TouchableOpacity>
+          <View style={styles.modalButtons}>
+            <TouchableOpacity style={styles.button} onPress={handlePost}>
+              <Text style={styles.buttonText}>Post</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalCloseButton]}
-              onPress={() => setModalVisible(!modalVisible)}
-            >
-              <Text style={styles.textStyle}>Close</Text>
+            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setModalVisible(false)}>
+              <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
       <Modal
-        animationType="slide"
-        transparent={true}
         visible={editModalVisible}
-        onRequestClose={() => {
-          setEditModalVisible(!editModalVisible);
-        }}
+        animationType="slide"
+        onRequestClose={() => setEditModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Edit Topic</Text>
-            <TextInput
-              style={styles.input}
-              value={editText}
-              onChangeText={setEditText}
-              placeholder="Edit your topic here..."
-            />
-            <TouchableOpacity style={styles.modalPostButton} onPress={handleEdit}>
-              <Text style={styles.postButtonText}>Save</Text>
+          <Text style={styles.modalTitle}>Edit Topic</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Edit your topic..."
+            value={editText}
+            onChangeText={setEditText}
+          />
+          <View style={styles.modalButtons}>
+            <TouchableOpacity style={styles.button} onPress={handleEdit}>
+              <Text style={styles.buttonText}>Save</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalCloseButton]}
-              onPress={() => setEditModalVisible(!editModalVisible)}
-            >
-              <Text style={styles.textStyle}>Close</Text>
+            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setEditModalVisible(false)}>
+              <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -332,195 +350,127 @@ const TopicScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#dcd9f4', // สีม่วงดอกอัญชัน
-    borderRadius: 10,
-
+    backgroundColor: '#fff',
   },
   topicsContainer: {
-    flexGrow: 1,
-    paddingVertical: 20,
-    
+    padding: 20,
   },
   topicCard: {
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
     padding: 15,
-    marginBottom: 15,
-    marginHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    marginBottom: 20,
   },
   topicText: {
     fontSize: 18,
     marginBottom: 10,
-    color: '#333',
-    fontWeight: 'bold',
-
+  },
+  topicImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
   },
   topicUser: {
     fontSize: 14,
-    color: '#555',
+    color: '#888',
     marginBottom: 10,
-    
   },
   topicFooter: {
-    borderTopWidth: 1,
-    borderTopColor: '#581A5F',
-    paddingTop: 10,
-    
-  },
-  iconContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
   },
   iconButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    
-    
   },
   iconText: {
     marginLeft: 5,
-    color: '#333',
   },
   commentsContainer: {
     marginTop: 10,
-
   },
   comment: {
     backgroundColor: '#f1f1f1',
-    borderRadius: 10,
+    borderRadius: 5,
     padding: 10,
-    marginBottom: 5,
+    marginTop: 5,
   },
   commentText: {
     fontSize: 14,
-    color: '#333',
   },
   commentUser: {
     fontSize: 12,
-    color: '#555',
-    marginTop: 5,
-    textAlign: 'right',
+    color: '#666',
   },
   commentInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 5,
     marginTop: 10,
+    borderRadius: 5,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    padding: 10,
   },
-  fab: {
+  addButton: {
     position: 'absolute',
-    right: 20,
-    bottom: 20,
-    backgroundColor: '#2ecc71',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    
+    bottom: 30,
+    right: 30,
+    backgroundColor: '#007bff',
+    borderRadius: 50,
+    padding: 15,
+    elevation: 3,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2
-      
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '80%',
+    padding: 20,
+    backgroundColor: '#fff',
   },
   modalTitle: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#0B0428',
-        backgroundColor: '#red',
-
-
-    
-  }, //#0B0428
-  modalButton: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-    backgroundColor: 'red',
-
-  },
-  modalPostButton: {
-    backgroundColor: '#0B0428',
-    paddingVertical: 15,
-    paddingHorizontal: 120,
-    marginVertical: 10,
-    borderRadius: 20,
-    
-  },
-  modalCloseButton: {
-    backgroundColor: '#e74c3c',
-    paddingVertical: 15,
-    paddingHorizontal: 120,
-    marginVertical: 10,
-    borderRadius: 20,
-    
-  },
-  textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
+    fontSize: 24,
+    marginBottom: 20,
     textAlign: 'center',
-    
-    
   },
   input: {
-    width: '100%',
-    height: '20%',
-    borderWidth: 3,
-    borderColor: '#0B0428',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    marginVertical: 10,
-    textAlign: 'center',
-    fontSize: 16,
-
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 20,
   },
-  postButtonText: {
+  previewImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  imagePickerButton: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  imagePickerButtonText: {
+    color: '#fff',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#ccc',
+  },
+  buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-
   },
-   logo: {
-    width: 400,
-    height: 120,
-    alignSelf: 'center',
-    marginBottom: 0,
-    
-  }
 });
-
 export default TopicScreen;
