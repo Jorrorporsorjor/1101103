@@ -332,7 +332,7 @@ const TopicScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0C0129', // สีม่วงดอกอัญชัน
+    backgroundColor: '#dcd9f4', // สีม่วงดอกอัญชัน
     borderRadius: 10,
 
   },
