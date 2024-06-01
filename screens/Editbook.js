@@ -4,20 +4,20 @@ import { AntDesign } from '@expo/vector-icons';
 import { firebase, storage } from '../config/firebase'; // Adjust according to your configuration file
 import * as ImagePicker from 'expo-image-picker';
 
-const EdittipsScreen = ({ navigation, image, userId }) => {
-  const tipsCollection = firebase.firestore().collection('tips');
+const EditEbookScreen = ({ navigation, image, userId }) => {
+  const ebookCollection = firebase.firestore().collection('ebook');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null); // State for the user being edited
   const [newName, setNewName] = useState('');
   const [newAuthor, setNewAuthor] = useState('');
   const [newDescription, setNewDescription] = useState('');
-  const [tipsAndAnimetionPictures, settipsAndAnimetionPictures] = useState(image || ''); // Initialize as an empty string
+  const [profilePicture, setProfilePicture] = useState(image || ''); // Initialize as an empty string
   const [imageUrl, setImageUrl] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = tipsCollection.onSnapshot(
+    const unsubscribe = ebookCollection.onSnapshot(
       (querySnapshot) => {
         const usersList = [];
         querySnapshot.forEach((doc) => {
@@ -46,7 +46,7 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
     setNewName(user.name);
     setNewAuthor(user.Author);
     setNewDescription(user.description);
-    settipsAndAnimetionPictures(user.image);
+    setProfilePicture(user.image);
   };
 
   const cancelEditing = () => {
@@ -54,17 +54,17 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
     setNewName('');
     setNewAuthor('');
     setNewDescription('');
-    settipsAndAnimetionPictures('');
+    setProfilePicture('');
   };
 
-  const saveEdit = async (tipsAndAnimetionPicturesUrl) => {
+  const saveEdit = async (profilePictureUrl) => {
     if (editingUser) {
       try {
-        await tipsCollection.doc(editingUser).update({
+        await ebookCollection.doc(editingUser).update({
           name: newName,
           Author: newAuthor,
           description: newDescription,
-          image: tipsAndAnimetionPicturesUrl || tipsAndAnimetionPictures,
+          image: profilePictureUrl || profilePicture,
         });
         console.log('Document successfully updated!');
         cancelEditing();
@@ -74,17 +74,17 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
     }
   };
 
-  const addField = async (tipsAndAnimetionPicturesUrl) => {
-    if (newName && newAuthor && newDescription && tipsAndAnimetionPicturesUrl) {
+  const addField = async (profilePictureUrl) => {
+    if (newName && newAuthor && newDescription && profilePictureUrl) {
       const data = {
         name: newName,
         Author: newAuthor,
         description: newDescription,
-        image: tipsAndAnimetionPicturesUrl,
+        image: profilePictureUrl,
         userId: `m${users.length + 1 < 10 ? '0' + (users.length + 1) : users.length + 1}`,
       };
       try {
-        await tipsCollection.add(data);
+        await ebookCollection.add(data);
         cancelEditing();
       } catch (error) {
         alert(error);
@@ -95,7 +95,7 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
   };
 
   useEffect(() => {
-    settipsAndAnimetionPictures(image);
+    setProfilePicture(image);
   }, [image]);
 
   const pickImage = async () => {
@@ -120,11 +120,11 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
 
         const imageName = `${userId}_${new Date().getTime()}`;
 
-        const ref = firebase.storage().ref().child(`tipsAndAnimetionPictures/${imageName}`);
+        const ref = firebase.storage().ref().child(`Eebookpicture/${imageName}`);
         const snapshot = await ref.put(blob);
-        const tipsAndAnimetionPicturesUrl = await snapshot.ref.getDownloadURL();
+        const profilePictureUrl = await snapshot.ref.getDownloadURL();
 
-        settipsAndAnimetionPictures(tipsAndAnimetionPicturesUrl);
+        setProfilePicture(profilePictureUrl);
       } catch (error) {
         console.error("Error uploading image:", error);
         alert('Failed to upload image. Please try again.');
@@ -134,10 +134,10 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
 
   const handleImageUrlChange = async () => {
     if (imageUrl) {
-      settipsAndAnimetionPictures(imageUrl);
+      setProfilePicture(imageUrl);
       if (editingUser) {
         try {
-          await firebase.firestore().collection('tips').doc(editingUser).update({ image: imageUrl });
+          await firebase.firestore().collection('ebook').doc(editingUser).update({ image: imageUrl });
           setImageUrl('');
         } catch (error) {
           console.error("Error updating image URL:", error);
@@ -149,16 +149,16 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
 
   const handleConfirm = async () => {
     if (editingUser) {
-      await saveEdit(tipsAndAnimetionPictures);
+      await saveEdit(profilePicture);
     } else {
-      await addField(tipsAndAnimetionPictures);
+      await addField(profilePicture);
     }
     setModalVisible(false);
   };
 
   const deleteUser = async (id) => {
     try {
-      await tipsCollection.doc(id).delete();
+      await ebookCollection.doc(id).delete();
       console.log('Document successfully deleted!');
     } catch (error) {
       console.error('Error removing document: ', error);
@@ -172,8 +172,8 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
   return (
     <View style={styles.container}>
       <View style={styles.section1}>
-        <Text style={[styles.text, { textAlign: 'center' }]}>Tips</Text>
-        
+        <Text style={[styles.text, { textAlign: 'center' }]}>E-Book</Text>
+     
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         {users.map((item) => (
@@ -185,7 +185,7 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
                   style={styles.input}
                   value={newName}
                   onChangeText={setNewName}
-                  placeholder="tips Name"
+                  placeholder="Ebook Name"
                 />
                 <TextInput
                   style={styles.input}
@@ -207,7 +207,7 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
               </>
             ) : (
               <>
-                <Text>tips Name: {item.name}</Text>
+                <Text>E-Book Name: {item.name}</Text>
                 <Text>Author: {item.Author}</Text>
                 <Text>Description: {item.description}</Text>
                 <TouchableOpacity style={styles.button} onPress={() => startEditing(item)}>
@@ -232,7 +232,7 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
         onRequestClose={() => setModalVisible(!modalVisible)}
       >
         <View style={styles.modalView}>
-          <Image source={{ uri: tipsAndAnimetionPictures }} style={styles.modalImage} />
+          <Image source={{ uri: profilePicture }} style={styles.modalImage} />
           <Button title="Upload from Gallery" onPress={pickImage} />
           <Text style={styles.modalText}>or</Text>
           <TextInput
@@ -246,7 +246,7 @@ const EdittipsScreen = ({ navigation, image, userId }) => {
             style={styles.input}
             value={newName}
             onChangeText={setNewName}
-            placeholder="tips Name"
+            placeholder="E-Book Name"
           />
           <TextInput
             style={styles.input}
@@ -353,5 +353,4 @@ const styles = StyleSheet.create({
   },
 });
 
-
-export default EdittipsScreen;
+export default EditEbookScreen;
