@@ -293,15 +293,16 @@ const TopicScreen = () => {
         ) : (
           topics.map((topic) => (
             <View key={topic.id} style={styles.topicCard}>
-              <Text style={styles.topicText}>{topic.text}</Text>
+            
               <Text style={styles.topicUser}> {topic.user.name}</Text>
               {topic.imageUrl && <Image source={{ uri: topic.imageUrl }} style={styles.topicImage} />}
-             
+              
               <View style={styles.topicFooter}>
                 <TouchableOpacity onPress={() => handleLike(topic.id)} style={styles.iconButton}>
                   <Ionicons name={topic.likes.includes(user?.uid) ? 'heart' : 'heart-outline'} size={24} color="#EA6B6E" />
                   <Text style={styles.iconText}>{topic.likes.length}</Text>
                 </TouchableOpacity>
+                
                 {user && user.uid === topic.user.id && (
                   <>
                     <TouchableOpacity
@@ -319,7 +320,9 @@ const TopicScreen = () => {
                     </TouchableOpacity>
                   </>
                 )}
+                
               </View>
+              <Text style={styles.topicText}>{topic.text}</Text>
               <View style={styles.commentsContainer}>
                 {topic.comments.map((comment, index) => (
                   <View key={index} style={styles.comment}>
@@ -437,20 +440,22 @@ const styles = StyleSheet.create({
     elevation: 5, // การยกระดับของเงา (สำหรับ Android)
   },
   topicText: {
-    fontSize: 18,
+    fontSize: 15,
     marginBottom: 10,
-    top: 30,
+    top: 4,
+    left: 5,
+    color:'#5A5959'
   },
   topicImage: {
     width: 353,
     height: 200,
     borderRadius: 0,
-    marginBottom: -23,
-    top: -37,
+    marginBottom: 15,
+    top: 0,
     left: -15,
   },
   pen: {
-    
+    left: 95,
     
   },
 
@@ -458,7 +463,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#2B234C',
     marginBottom: 10,
-    top: -37,
+    top: 0,
     
   },
   topicFooter: {
@@ -468,6 +473,7 @@ const styles = StyleSheet.create({
   iconButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    
     
   },
   iconText: {
