@@ -289,7 +289,7 @@ const TopicScreen = () => {
         contentContainerStyle={styles.topicsContainer}
       >
         {loading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
+          <ActivityIndicator size="large" color="#0000ff"  />
         ) : (
           topics.map((topic) => (
             <View key={topic.id} style={styles.topicCard}>
@@ -299,7 +299,7 @@ const TopicScreen = () => {
              
               <View style={styles.topicFooter}>
                 <TouchableOpacity onPress={() => handleLike(topic.id)} style={styles.iconButton}>
-                  <Ionicons name={topic.likes.includes(user?.uid) ? 'heart' : 'heart-outline'} size={24} color="#786bbc" />
+                  <Ionicons name={topic.likes.includes(user?.uid) ? 'heart' : 'heart-outline'} size={24} color="#EA6B6E" />
                   <Text style={styles.iconText}>{topic.likes.length}</Text>
                 </TouchableOpacity>
                 {user && user.uid === topic.user.id && (
@@ -481,7 +481,9 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     marginTop: 5,
+    
   },
+  
   commentText: {
     fontSize: 14,
   },
@@ -585,6 +587,8 @@ const styles = StyleSheet.create({
     height: 120,
     alignSelf: 'center',
     marginBottom: 0,
+    top: 15,
+    
   },
 });
 
