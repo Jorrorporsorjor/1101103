@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, Image, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Button, Image, Alert, TextInput, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { getAuth, updateProfile } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -21,7 +21,6 @@ const ProfileScreen = ({ navigation }) => {
         setName(user.displayName || 'Anonymous');
         setImage(user.photoURL || 'https://img.icons8.com/ios-filled/100/000000/user-male-circle.png');
 
-        // Check if user has a profile picture in Firestore
         const docRef = doc(db, 'users', auth.currentUser.uid);
         const docSnap = await getDoc(docRef);
 
@@ -32,7 +31,6 @@ const ProfileScreen = ({ navigation }) => {
             setImage(userData.profilePicture);
           }
         } else {
-          // If user document does not exist, set initial profile picture
           setProfilePicture(user.photoURL || '');
         }
       } else {
@@ -40,7 +38,7 @@ const ProfileScreen = ({ navigation }) => {
       }
     });
 
-    return unsubscribe; // Unsubscribe on component unmount
+    return unsubscribe;
   }, [auth, db, navigation]);
 
   const pickImage = async () => {
@@ -88,18 +86,14 @@ const ProfileScreen = ({ navigation }) => {
       const userId = auth.currentUser.uid;
       const imageName = `${userId}_${new Date().getTime()}`;
 
-      // Upload image to Firebase Storage
       const storageRef = ref(storage, `profilePictures/${userId}/${imageName}`);
       const snapshot = await uploadBytes(storageRef, blob);
       const profilePictureUrl = await getDownloadURL(snapshot.ref);
 
-      // Update profile picture in Firestore
       await setDoc(doc(db, 'users', userId), { profilePicture: profilePictureUrl }, { merge: true });
 
-      // Update profile picture in Firebase Auth
       await updateProfile(auth.currentUser, { photoURL: profilePictureUrl });
 
-      // Update profile picture state
       setProfilePicture(profilePictureUrl);
       setImage(profilePictureUrl);
     } catch (error) {
@@ -112,7 +106,6 @@ const ProfileScreen = ({ navigation }) => {
     try {
       await updateProfile(auth.currentUser, { displayName: newName });
 
-      // Update username in Firestore
       await setDoc(doc(db, 'users', auth.currentUser.uid), { username: newName }, { merge: true });
 
       setName(newName);
@@ -144,10 +137,20 @@ const ProfileScreen = ({ navigation }) => {
           value={newName}
           onChangeText={setNewName}
         />
-        <Button title="Update Username" onPress={handleUpdateUsername} />
-        <Button title="Change Profile Picture" onPress={pickImage} />
-        <Button title="Take Photo" onPress={takePhoto} />
-        <Button title="Logout" onPress={handleLogout} />
+        <TouchableOpacity style={styles.button} onPress={handleUpdateUsername}>
+          <Text style={styles.buttonText}>Update Username</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={pickImage}>
+          <Text style={styles.buttonText}>Upload Profile</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={takePhoto}>
+          <Text style={styles.buttonText}>Take Photo</Text>
+        </TouchableOpacity>
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.buttonLogout} onPress={handleLogout}>
+            <Text style={styles.buttonText}>LOG OUT</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </StripeProvider>
   );
@@ -158,27 +161,69 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#dcd9f4'
+    backgroundColor: '#0B0428',
+    padding: 20,
+    borderRadius: 30,
+    bottom: 100,
+    marginTop: 60,
   },
   icon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     marginBottom: 20,
+    backgroundColor: '#dcd9f4',
   },
   text: {
     fontSize: 18,
+    color: 'white',
     marginBottom: 20,
   },
   input: {
     width: '80%',
-    height: 40,
+    height: 50,
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
     marginBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#dcd9f4',
+    color: 'black',
+    textAlign: 'center',
+  },
+  button: {
+    width: '80%',
+    height: 50,
+    backgroundColor: '#663399',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  buttonLogout: {
+    width: '80%',
+    height: 40,
+    backgroundColor: '#5900b3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 5,
+    fontFamily: 'Prompt-Regular',
+
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  footer: {
+    width: '100%',
+    position: 'absolute',
+    bottom: -20,
+    padding: 10,
+    backgroundColor: '#5900b3',
+    alignItems: 'center',
+    borderRadius: 100,
+    width: '80%',
+    height: '40',
   },
 });
 
