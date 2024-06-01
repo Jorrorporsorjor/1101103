@@ -1,27 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Button, Keyboard, Image, Modal } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
-import { firebase } from '../config/firebase';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Alert } from 'react-native';
+import { firebase, storage } from '../config/firebase'; // Adjust according to your configuration file
+import * as ImagePicker from 'expo-image-picker';
 
-const EbookScreen = ({ navigation }) => {
+const EditEbookScreen = ({ navigation, image, userId }) => {
+  const ebookCollection = firebase.firestore().collection('ebook');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const ebookCollection = firebase.firestore().collection('ebook');
+  const [editingUser, setEditingUser] = useState(null); // State for the user being edited
+  const [newName, setNewName] = useState('');
+  const [newAuthor, setNewAuthor] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [profilePicture, setProfilePicture] = useState(image || ''); // Initialize as an empty string
+  const [imageUrl, setImageUrl] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     const unsubscribe = ebookCollection.onSnapshot(
       (querySnapshot) => {
         const usersList = [];
         querySnapshot.forEach((doc) => {
-          const { name, Author, description, image } = doc.data(); // Add 'image' to retrieve image URL from Firestore
+          const { name, Author, description, image } = doc.data();
           usersList.push({
             id: doc.id,
             name,
             Author,
             description,
-            image,
+            image
           });
         });
         setUsers(usersList);
@@ -34,17 +40,129 @@ const EbookScreen = ({ navigation }) => {
     );
     return () => unsubscribe();
   }, []);
-  const showAlert = (description) => {
-    Alert.alert(
-      "คำอธิบายเพิ่มเติม",
-      description,
-      [{ text: "ตกลง", style: 'cancel', textStyle: styles.alertButton }],
-      { cancelable: false,
-        style: 'default',
-        titleStyle: { color: 'red' }, // เปลี่ยนสีของหัวข้อ
-        messageStyle: { color: 'blue' } // เปลี่ยนสีของข้อความเนื้อหา
+
+  const startEditing = (user) => {
+    setEditingUser(user.id);
+    setNewName(user.name);
+    setNewAuthor(user.Author);
+    setNewDescription(user.description);
+    setProfilePicture(user.image);
+  };
+
+  const cancelEditing = () => {
+    setEditingUser(null);
+    setNewName('');
+    setNewAuthor('');
+    setNewDescription('');
+    setProfilePicture('');
+  };
+
+  const saveEdit = async (profilePictureUrl) => {
+    if (editingUser) {
+      try {
+        await ebookCollection.doc(editingUser).update({
+          name: newName,
+          Author: newAuthor,
+          description: newDescription,
+          image: profilePictureUrl || profilePicture,
+        });
+        console.log('Document successfully updated!');
+        cancelEditing();
+      } catch (error) {
+        console.error('Error updating document: ', error);
       }
-    );
+    }
+  };
+
+  const addField = async (profilePictureUrl) => {
+    if (newName && newAuthor && newDescription && profilePictureUrl) {
+      const data = {
+        name: newName,
+        Author: newAuthor,
+        description: newDescription,
+        image: profilePictureUrl,
+        userId: `m${users.length + 1 < 10 ? '0' + (users.length + 1) : users.length + 1}`,
+      };
+      try {
+        await ebookCollection.add(data);
+        cancelEditing();
+      } catch (error) {
+        alert(error);
+      }
+    } else {
+      alert('Please fill out all fields.');
+    }
+  };
+
+  useEffect(() => {
+    setProfilePicture(image);
+  }, [image]);
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      try {
+        const uri = result.assets[0].uri;
+        const response = await fetch(uri);
+        const blob = await response.blob();
+
+        const imageName = `${userId}_${new Date().getTime()}`;
+
+        const ref = firebase.storage().ref().child(`Eebookpicture/${imageName}`);
+        const snapshot = await ref.put(blob);
+        const profilePictureUrl = await snapshot.ref.getDownloadURL();
+
+        setProfilePicture(profilePictureUrl);
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        alert('Failed to upload image. Please try again.');
+      }
+    }
+  };
+
+  const handleImageUrlChange = async () => {
+    if (imageUrl) {
+      setProfilePicture(imageUrl);
+      if (editingUser) {
+        try {
+          await firebase.firestore().collection('ebook').doc(editingUser).update({ image: imageUrl });
+          setImageUrl('');
+        } catch (error) {
+          console.error("Error updating image URL:", error);
+          alert('Failed to update image URL. Please try again.');
+        }
+      }
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (editingUser) {
+      await saveEdit(profilePicture);
+    } else {
+      await addField(profilePicture);
+    }
+    setModalVisible(false);
+  };
+
+  const deleteUser = async (id) => {
+    try {
+      await ebookCollection.doc(id).delete();
+      console.log('Document successfully deleted!');
+    } catch (error) {
+      console.error('Error removing document: ', error);
+    }
   };
 
   if (loading) {
@@ -53,34 +171,100 @@ const EbookScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-                colors={['#8678c1', '#7164b6']}
-                style={styles.section1}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-            >
-                <Text style={[styles.text, { textAlign: 'center' }]}>E-BOOK</Text>
-                <Text style={[styles.text2, { textAlign: 'center' }]}>อีบุ๊ก</Text>
-            </LinearGradient>
+      <View style={styles.section1}>
+        <Text style={[styles.text, { textAlign: 'center' }]}>E-Book</Text>
+     
+      </View>
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         {users.map((item) => (
           <View key={item.id} style={styles.itemContainer}>
-          <View style={styles.scrollViewContainer2}></View>
-            {/* Display the image */}
             <Image source={{ uri: item.image }} style={styles.profileImage} />
-            <View style={styles.textContainer}>
-              <Text style={styles.textMovie}>Name: {item.name}</Text>
-              <Text style={styles.textMovie2}>Author: {item.Author}</Text>
-              <Text style={styles.textMovie3}>Description: {item.description}</Text>
-            </View>
-            <TouchableOpacity onPress={() => showAlert(item.description)}>
-              <Text style={styles.textMovie4}>เพิ่มเติม</Text>
-              </TouchableOpacity>
+            {editingUser === item.id ? (
+              <>
+                <TextInput
+                  style={styles.input}
+                  value={newName}
+                  onChangeText={setNewName}
+                  placeholder="Ebook Name"
+                />
+                <TextInput
+                  style={styles.input}
+                  value={newAuthor}
+                  onChangeText={setNewAuthor}
+                  placeholder="Author"
+                />
+                <TextInput
+                  style={styles.input}
+                  value={newDescription}
+                  onChangeText={setNewDescription}
+                  placeholder="Description"
+                />
+                <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
+                  <Text style={styles.buttonText}>Edit Image</Text>
+                </TouchableOpacity>
+                <Button title="Save" onPress={handleConfirm} />
+                <Button title="Cancel" onPress={cancelEditing} />
+              </>
+            ) : (
+              <>
+                <Text>E-Book Name: {item.name}</Text>
+                <Text>Author: {item.Author}</Text>
+                <Text>Description: {item.description}</Text>
+                <TouchableOpacity style={styles.button} onPress={() => startEditing(item)}>
+                  <Text style={styles.buttonText}>Edit</Text>
+                </TouchableOpacity>
+                <Button title="Delete" onPress={() => deleteUser(item.id)} color="#665A9E" />
+              </>
+            )}
           </View>
         ))}
       </ScrollView>
+      <View style={styles.formContainer}>
+        <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
+          <Text style={styles.buttonText}>Add</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(!modalVisible)}
+      >
+        <View style={styles.modalView}>
+          <Image source={{ uri: profilePicture }} style={styles.modalImage} />
+          <Button title="Upload from Gallery" onPress={pickImage} />
+          <Text style={styles.modalText}>or</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter image URL"
+            value={imageUrl}
+            onChangeText={setImageUrl}
+          />
+          <Button title="Use URL" onPress={handleImageUrlChange} />
+          <TextInput
+            style={styles.input}
+            value={newName}
+            onChangeText={setNewName}
+            placeholder="E-Book Name"
+          />
+          <TextInput
+            style={styles.input}
+            value={newAuthor}
+            onChangeText={setNewAuthor}
+            placeholder="Author"
+          />
+          <TextInput
+            style={styles.input}
+            value={newDescription}
+            onChangeText={setNewDescription}
+            placeholder="Description"
+          />
+          <Button title="Confirm" onPress={handleConfirm} />
+        </View>
+      </Modal>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <AntDesign name="arrowleft" size={24} color="#e6e6ee" />
+          <AntDesign name="arrowleft" size={24} color="white" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
     </View>
@@ -89,180 +273,84 @@ const EbookScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-      flex: 1,
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      backgroundColor: '#dcd9f4',
-      shadowColor: '#000', // สีของเงา
-      shadowOffset: { width: 0, height: 2 }, // การเลื่อนของเงา
-      shadowOpacity: 1, // ความทึบของเงา
-      shadowRadius: 2, // รัศมีของเงา
-      elevation: 5, // การยกระดับของเงา (สำหรับ Android)
-    }, 
-    section1: {
-      height: '19%',
-          backgroundColor: '#f4ebdc',
-          borderTopLeftRadius: 3,
-          borderTopRightRadius: 3,
-          borderBottomRightRadius: 60,
-          borderBottomLeftRadius: 60,
-          shadowColor: '#000', // สีของเงา
-          shadowOffset: { width: 0, height: 2 }, // การเลื่อนของเงา
-          shadowOpacity: 1, // ความทึบของเงา
-          shadowRadius: 2, // รัศมีของเงา
-          elevation: 5, // การยกระดับของเงา (สำหรับ Android)
-    },
-    text2: {
-      fontSize: 25, // ปรับขนาดตัวอักษร
-      color: 'white',
-      fontWeight: 'bold',
-      lineHeight: 30, // ปรับระยะห่างระหว่างบรรทัด
-      marginTop: 0, // เว้นระยะห่างด้านบน
-      textShadowColor: 'rgba(0, 0, 0, 0.75)', // สีของเงา
-      textShadowOffset: { width: -1, height: 1 }, // ตำแหน่งของเงา
-      textShadowRadius: 10, // รัศมีของเงา
+    flex: 1,
+    padding: 10,
+  },
+  section1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   text: {
-      fontSize: 20, // ปรับขนาดตัวอักษร
-      color: 'white',
-      fontWeight: 'bold',
-      lineHeight: 30, // ปรับระยะห่างระหว่างบรรทัด
-      marginTop: 50, // เว้นระยะห่างด้านบน
-      marginBottom: 0, // เว้นระยะห่างด้านล่าง
-      textShadowColor: 'rgba(0, 0, 0, 0.75)', // สีของเงา
-      textShadowOffset: { width: -1, height: 1 }, // ตำแหน่งของเงา
-      textShadowRadius: 10, // รัศมีของเงา
-      
-  },
-    scrollViewContainer: {
-      flexGrow: 1,
-      backgroundColor: '#dcd9f4',
-      alignItems: 'center',
-      paddingTop: 20,
-      
-    },
-    scrollViewContainer2: {
-      height: 70,
-      width: '107%',
-      backgroundColor: '#eeeef4',
-      paddingTop: 20,
-      top: 20,
-      borderTopLeftRadius: 20,
-          borderTopRightRadius: 10,
-           borderBottomRightRadius: 10,
-             borderBottomLeftRadius: 10,
-               
-    },
-    itemContainer: {
-      height: 220,
-      width: '82%',
-      backgroundColor: '#dcd9f4',
-      borderTopLeftRadius: 20,
-          borderTopRightRadius: 5,
-           borderBottomRightRadius: 5,
-             borderBottomLeftRadius: 5,
-      padding: 10,
-      marginVertical: 20,
-      top: -10,
-      marginTop: -10,
-     
-      
-      
-    },
-    backButton: {
-      flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: '#8678c1',
-          paddingHorizontal: 20,
-          paddingVertical: 10,
-          borderRadius: 30,
-          position: 'absolute',
-          top: 720,
-          left: 250,
-          shadowColor: '#000', // สีของเงา
-          shadowOffset: { width: 0, height: 1 }, // การเลื่อนของเงา
-          shadowOpacity: 0.8, // ความทึบของเงา
-          shadowRadius: 1, // รัศมีของเงา
-          elevation: 4, // การยกระดับของเงา (สำหรับ Android)
-    },
-    backButtonText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#e6e6ee',
-      marginLeft: 10,
-    },
-    profileImage: {
-      width: 120,
-      height: 200,
-      marginRight: 10,
-      borderTopLeftRadius: 5,
-      borderTopRightRadius: 5,
-      borderBottomRightRadius: 5,
-      borderBottomLeftRadius: 5,
-      left: -20,
-      top: -55,
-      shadowColor: '#000', // Shadow color
-      shadowOffset: { width: 0, height: 1 }, // Shadow offset
-      shadowOpacity: 0.8, // Shadow opacity
-      shadowRadius: 1, // Shadow radius
-      elevation: 5, // Elevation for Android shadow
-         
-    },
-    textMovie: {
-      width: '75%',
-      fontSize: 16, // ปรับขนาดตัวอักษร
-      color: '#5B4F92',
-      fontWeight: 'bold',
-      lineHeight: 20, // ปรับระยะห่างระหว่างบรรทัด
-      marginTop: 10, // เว้นระยะห่างด้านบน
-      marginBottom: 0, // เว้นระยะห่างด้านล่าง
-      top: -250,
-      left: 110,
-  },
-  textMovie2: {
-    width: '80%',
-    fontSize: 12, // ปรับขนาดตัวอักษร
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#8678c1',
-    fontWeight: 'bold',
-    lineHeight: 13, // ปรับระยะห่างระหว่างบรรทัด
-    marginTop: 0, // เว้นระยะห่างด้านบน
-    marginBottom: 0, // เว้นระยะห่างด้านล่าง
-    top: -250,
-      left: 110,
   },
-  textMovie3: {
-    height: 50,
-    width: '60%',
-    fontSize: 9, // ปรับขนาดตัวอักษร
-    color: '#5B4F92',
-    fontWeight: 'bold',
-    lineHeight: 13, // ปรับระยะห่างระหว่างบรรทัด
-    marginTop: 40, // เว้นระยะห่างด้านบน
-    marginBottom: 0, // เว้นระยะห่างด้านล่าง
-    top: -250,
-      left: 110,
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#8678c1',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 30,
+    position: 'absolute',
+    top: 650,
+    left: 270,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.8,
+    shadowRadius: 1,
+    elevation: 4,
   },
-  textMovie4: {
-    height: 50,
-    width: '60%',
-    fontSize: 9, // ปรับขนาดตัวอักษร
-    color: '#5B4F92',
-    fontWeight: 'bold',
-    lineHeight: 13, // ปรับระยะห่างระหว่างบรรทัด
-    marginTop: 0, // เว้นระยะห่างด้านบน
-    marginBottom: 0, // เว้นระยะห่างด้านล่าง
-    top: -250,
-      left: 110,
+  backButtonText: {
+    marginLeft: 5,
+    color: 'white',
+    
   },
-  descriptionButton: {
-    width: '70%',
-      backgroundColor: '#2ecc71',
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-      borderRadius: 5,
-      top: -190,
-      left: 110,
+  scrollViewContainer: {
+    paddingBottom: 100,
   },
-  });
+  itemContainer: {
+    marginBottom: 20,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 5,
+    marginVertical: 5,
+  },
+  button: {
+    backgroundColor: '#8678c1',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginVertical: 5,
+  },
+  buttonText: {
+    color: 'white',
+  },
+  formContainer: {
+    marginVertical: 20,
+  },
+  modalView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 20,
+  },
+  modalImage: {
+    width: 200,
+    height: 200,
+    marginBottom: 20,
+  },
+  modalText: {
+    marginBottom: 20,
+  },
+});
 
-export default EbookScreen;
+export default EditEbookScreen;
