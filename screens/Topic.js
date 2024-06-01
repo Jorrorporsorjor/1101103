@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Modal, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Modal, Image, Animated } from 'react-native';
 import { db } from '../config/firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
@@ -19,6 +19,8 @@ const TopicScreen = () => {
   const [editTopic, setEditTopic] = useState(null);
   const [editText, setEditText] = useState('');
   const scrollViewRef = useRef();
+  const moveAnimation = useRef(new Animated.Value(0)).current;
+
 
   useEffect(() => {
     const auth = getAuth();
@@ -235,6 +237,22 @@ const TopicScreen = () => {
 
   return (
     <View style={styles.container}>
+      <Animated.Image
+          source={require('../pic/topic1.png')}
+          style={[
+            styles.logo,
+            {
+              transform: [
+                {
+                  translateY: moveAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 10], // Adjust the movement distance as needed
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
       <ScrollView
         ref={scrollViewRef}
         onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
@@ -350,7 +368,7 @@ const TopicScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#dcd9f4', // สีม่วงดอกอัญชัน
   },
   topicsContainer: {
     padding: 20,
@@ -472,5 +490,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+   logo: {
+    width: 400,
+    height: 120,
+    alignSelf: 'center',
+    marginBottom: 0,
+    
+  }
 });
 export default TopicScreen;
