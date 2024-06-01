@@ -173,10 +173,6 @@ const EditmovieScreen = ({ navigation, image, userId }) => {
     <View style={styles.container}>
       <View style={styles.section1}>
         <Text style={[styles.text, { textAlign: 'center' }]}>MOVIE & ANIMATION</Text>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <AntDesign name="arrowleft" size={24} color="black" />
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         {users.map((item) => (
@@ -216,7 +212,7 @@ const EditmovieScreen = ({ navigation, image, userId }) => {
                 <TouchableOpacity style={styles.button} onPress={() => startEditing(item)}>
                   <Text style={styles.buttonText}>Edit</Text>
                 </TouchableOpacity>
-                <Button title="Delete" onPress={() => deleteUser(item.id)} />
+                <Button title="Delete" onPress={() => deleteUser(item.id)} color="#665A9E" />
               </>
             )}
           </View>
@@ -266,11 +262,15 @@ const EditmovieScreen = ({ navigation, image, userId }) => {
           <Button title="Confirm" onPress={handleConfirm} />
         </View>
       </Modal>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <AntDesign name="arrowleft" size={24} color="white" />
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
@@ -283,15 +283,28 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#8678c1',
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#8678c1',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 30,
     position: 'absolute',
-    left: 0,
+    top: 650,
+    left: 270,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.8,
+    shadowRadius: 1,
+    elevation: 4,
   },
   backButtonText: {
     marginLeft: 5,
+    color: 'white',
+    
   },
   scrollViewContainer: {
     paddingBottom: 100,
@@ -310,7 +323,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   button: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#8678c1',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
