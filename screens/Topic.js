@@ -7,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-
 const TopicScreen = () => {
   const [topics, setTopics] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -20,7 +19,7 @@ const TopicScreen = () => {
   const [editText, setEditText] = useState('');
   const scrollViewRef = useRef();
   const moveAnimation = useRef(new Animated.Value(0)).current;
-
+  const [commentText, setCommentText] = useState('');
 
   useEffect(() => {
     const auth = getAuth();
@@ -71,19 +70,34 @@ const TopicScreen = () => {
     return `${adjective}${noun}`;
   };
 
-  const handleImagePick = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Sorry, we need camera permissions to make this work!');
-      return;
-    }
+  const handleImagePick = async (source) => {
+    let result;
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+    if (source === 'camera') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Sorry, we need camera permissions to make this work!');
+        return;
+      }
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    } else if (source === 'gallery') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Sorry, we need gallery permissions to make this work!');
+        return;
+      }
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+    }
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
@@ -163,7 +177,6 @@ const TopicScreen = () => {
   };
 
   const handleComment = async (topicId, commentText) => {
-    setInputText('');
     if (!user) {
       alert('You must be logged in to comment');
       return;
@@ -235,24 +248,41 @@ const TopicScreen = () => {
     );
   };
 
+  const handleDeleteComment = async (topicId, commentIndex) => {
+    if (!user) {
+      alert('You must be logged in to delete a comment');
+      return;
+    }
+
+    const topicRef = doc(db, 'topics', topicId);
+    const topic = topics.find((t) => t.id === topicId);
+    const updatedComments = topic.comments.filter((_, index) => index !== commentIndex);
+
+    try {
+      await updateDoc(topicRef, { comments: updatedComments });
+    } catch (error) {
+      console.error('Error deleting comment: ', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Animated.Image
-          source={require('../pic/topic1.png')}
-          style={[
-            styles.logo,
-            {
-              transform: [
-                {
-                  translateY: moveAnimation.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 10], // Adjust the movement distance as needed
-                  }),
-                },
-              ],
-            },
-          ]}
-        />
+        source={require('../pic/topic1.png')}
+        style={[
+          styles.logo,
+          {
+            transform: [
+              {
+                translateY: moveAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 10], // Adjust the movement distance as needed
+                }),
+              },
+            ],
+          },
+        ]}
+      />
       <ScrollView
         ref={scrollViewRef}
         onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
@@ -264,9 +294,7 @@ const TopicScreen = () => {
           topics.map((topic) => (
             <View key={topic.id} style={styles.topicCard}>
               <Text style={styles.topicText}>{topic.text}</Text>
-              {topic.imageUrl && (
-                <Image source={{ uri: topic.imageUrl }} style={styles.topicImage} />
-              )}
+              {topic.imageUrl && <Image source={{ uri: topic.imageUrl }} style={styles.topicImage} />}
               <Text style={styles.topicUser}>Posted by: {topic.user.name}</Text>
               <View style={styles.topicFooter}>
                 <TouchableOpacity onPress={() => handleLike(topic.id)} style={styles.iconButton}>
@@ -295,14 +323,26 @@ const TopicScreen = () => {
                 {topic.comments.map((comment, index) => (
                   <View key={index} style={styles.comment}>
                     <Text style={styles.commentText}>{comment.text}</Text>
-                    <Text style={styles.commentUser}>- {comment.user.name}</Text>
+                    <View style={styles.commentFooter}>
+                      <Text style={styles.commentUser}>- {comment.user.name}</Text>
+                      {user && user.uid === comment.user.id && (
+                        <TouchableOpacity onPress={() => handleDeleteComment(topic.id, index)} style={styles.iconButton}>
+                          <Ionicons name="trash-outline" size={16} color="#e74c3c" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 ))}
               </View>
               <TextInput
                 style={styles.commentInput}
                 placeholder="Add a comment..."
-                onSubmitEditing={(event) => handleComment(topic.id, event.nativeEvent.text)}
+                value={commentText}
+                onChangeText={setCommentText}
+                onSubmitEditing={(event) => {
+                  handleComment(topic.id, event.nativeEvent.text);
+                  setCommentText('');
+                }}
               />
             </View>
           ))
@@ -313,51 +353,62 @@ const TopicScreen = () => {
       </TouchableOpacity>
       <Modal
         visible={modalVisible}
-        animationType="slide"
+        animationType="fade"
+        transparent
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Create New Topic</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your topic..."
-            value={inputText}
-            onChangeText={setInputText}
-          />
-          {image && <Image source={{ uri: image }} style={styles.previewImage} />}
-          <TouchableOpacity style={styles.imagePickerButton} onPress={handleImagePick}>
-            <Text style={styles.imagePickerButtonText}>Pick an image</Text>
-          </TouchableOpacity>
-          <View style={styles.modalButtons}>
-            <TouchableOpacity style={styles.button} onPress={handlePost}>
-              <Text style={styles.buttonText}>Post</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setModalVisible(false)}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Create New Topic</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your topic..."
+              value={inputText}
+              onChangeText={setInputText}
+            />
+            {image && <Image source={{ uri: image }} style={styles.previewImage} />}
+            <View style={styles.imagePickerButtons}>
+              <TouchableOpacity style={styles.imagePickerButton} onPress={() => handleImagePick('camera')}>
+                <Text style={styles.imagePickerButtonText}>Take a photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.imagePickerButton} onPress={() => handleImagePick('gallery')}>
+                <Text style={styles.imagePickerButtonText}>Pick from gallery</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.button} onPress={handlePost}>
+                <Text style={styles.buttonText}>Post</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setModalVisible(false)}>
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
       <Modal
         visible={editModalVisible}
-        animationType="slide"
+        animationType="fade"
+        transparent
         onRequestClose={() => setEditModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Edit Topic</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Edit your topic..."
-            value={editText}
-            onChangeText={setEditText}
-          />
-          <View style={styles.modalButtons}>
-            <TouchableOpacity style={styles.button} onPress={handleEdit}>
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setEditModalVisible(false)}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Edit Topic</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Edit your topic..."
+              value={editText}
+              onChangeText={setEditText}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.button} onPress={handleEdit}>
+                <Text style={styles.buttonText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setEditModalVisible(false)}>
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -368,7 +419,7 @@ const TopicScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#dcd9f4', // สีม่วงดอกอัญชัน
+    backgroundColor: '#dcd9f4',
   },
   topicsContainer: {
     padding: 20,
@@ -417,6 +468,11 @@ const styles = StyleSheet.create({
   commentText: {
     fontSize: 14,
   },
+  commentFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   commentUser: {
     fontSize: 12,
     color: '#666',
@@ -437,11 +493,22 @@ const styles = StyleSheet.create({
     padding: 15,
     elevation: 3,
   },
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    width: '90%',
     backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   modalTitle: {
     fontSize: 24,
@@ -461,12 +528,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
+  imagePickerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
   imagePickerButton: {
     backgroundColor: '#007bff',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
-    marginBottom: 20,
+    flex: 1,
+    marginHorizontal: 5,
   },
   imagePickerButtonText: {
     color: '#fff',
@@ -490,12 +563,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
-   logo: {
+  logo: {
     width: 400,
     height: 120,
     alignSelf: 'center',
     marginBottom: 0,
-    
-  }
+  },
 });
+
 export default TopicScreen;
