@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, Image, Alert, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, Image, Alert, TextInput, TouchableOpacity } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { getAuth, updateProfile } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import { StripeProvider } from '@stripe/stripe-react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+//npx react-native-asset
+//npm install react-native-vector-icons
 
 const ProfileScreen = ({ navigation }) => {
   const [image, setImage] = useState('https://img.icons8.com/ios-filled/100/000000/user-male-circle.png');
@@ -16,6 +19,7 @@ const ProfileScreen = ({ navigation }) => {
   const [profilePicture, setProfilePicture] = useState('');
 
   useEffect(() => {
+    
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         setName(user.displayName || 'Anonymous');
@@ -128,44 +132,57 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <StripeProvider publishableKey="your-stripe-publishable-key">
-      <View style={styles.container}>
-        <Image source={{ uri: image }} style={styles.icon} />
-        <Text style={styles.text}>{name}</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="New Username"
-          value={newName}
-          onChangeText={setNewName}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleUpdateUsername}>
-          <Text style={styles.buttonText}>Update Username</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={pickImage}>
-          <Text style={styles.buttonText}>Upload Profile</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={takePhoto}>
-          <Text style={styles.buttonText}>Take Photo</Text>
-        </TouchableOpacity>
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.buttonLogout} onPress={handleLogout}>
-            <Text style={styles.buttonText}>LOG OUT</Text>
+      <ImageBackground source={require('../pic/B26.gif')} style={styles.backgroundImage}>
+        <View style={styles.container}>
+          <Image source={{ uri: image }} style={styles.icon} />
+          <Text style={styles.text}>{name}</Text>
+          <TextInput 
+            style={styles.input}
+            placeholder="New Username"
+            value={newName}
+            onChangeText={setNewName}
+          />
+          <TouchableOpacity style={styles.button} onPress={handleUpdateUsername}>
+            <Ionicons name="pencil" size={24} color="white" />
+            <Text style={styles.buttonText}>Update Username</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={pickImage}>
+            <Ionicons name="image" size={24} color="white" />
+            <Text style={styles.buttonText}>Upload Profile</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={takePhoto}>
+            <Ionicons name="camera" size={24} color="white" />
+            <Text style={styles.buttonText}>Take Photo</Text>
+          </TouchableOpacity>
+          <View style={styles.footer}>
+            <TouchableOpacity style={styles.buttonLogout} onPress={handleLogout}>
+              <Ionicons name="log-out" size={24} color="white" />
+              <Text style={styles.buttonText}>Log Out</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </ImageBackground>
     </StripeProvider>
   );
 };
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0B0428',
     padding: 20,
     borderRadius: 30,
-    bottom: 100,
     marginTop: 60,
+    bottom: 100,
+    
+  },
+  backgroundImage: {
+    flex: 1,
+    resizeMode: 'cover',
+    justifyContent: 'center',
+    
   },
   icon: {
     width: 150,
@@ -178,6 +195,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'white',
     marginBottom: 20,
+    fontFamily: 'Prompt-Regular',
   },
   input: {
     width: '80%',
@@ -190,36 +208,41 @@ const styles = StyleSheet.create({
     backgroundColor: '#dcd9f4',
     color: 'black',
     textAlign: 'center',
+    fontFamily: 'Prompt-Regular',
   },
   button: {
+    flexDirection: 'row',
+    alignItems: 'center',
     width: '80%',
     height: 50,
-    backgroundColor: '#663399',
+    backgroundColor: '#3C0FB2',
     justifyContent: 'center',
-    alignItems: 'center',
     borderRadius: 5,
     marginBottom: 10,
   },
   buttonLogout: {
+    flexDirection: 'row',
+    alignItems: 'center',
     width: '80%',
     height: 40,
-    backgroundColor: '#5900b3',
+    backgroundColor: '#0B0428', //#0B0428
     justifyContent: 'center',
-    alignItems: 'center',
     borderRadius: 5,
-    fontFamily: 'Prompt-Regular',
+    fontFamily: 'Prompt-Bold',
 
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
+    marginLeft: 10,
+    fontFamily: 'Prompt-Regular',
   },
   footer: {
     width: '100%',
     position: 'absolute',
     bottom: -20,
     padding: 10,
-    backgroundColor: '#5900b3',
+    backgroundColor: '#0B0428',
     alignItems: 'center',
     borderRadius: 100,
     width: '80%',
