@@ -12,8 +12,8 @@ const Theapyscreen = ({ navigation }) => {
                 start={{ x: 0, y: 0.5 }}
                 end={{ x: 1, y: 0.5 }}
             >
-                <Text style={styles.text}>   Stress</Text>
-                <Text style={styles.text2}>   Therapy</Text>
+                <Text style={styles.text}>                      Stress</Text>
+                <Text style={styles.text2}>               Therapy</Text>
             </LinearGradient>
             <ScrollView contentContainerStyle={styles.scrollViewContainer}>
             <LinearGradient
@@ -25,14 +25,14 @@ const Theapyscreen = ({ navigation }) => {
                   <Text style={styles.buttonText3}>category</Text>           
                 <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Tips")}>
                     <Text style={styles.buttonText}>TIPS</Text>
+                    <Text style={styles.buttonText2} >คำแนะนำ</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.button, { marginTop: 10 }]} onPress={() => navigation.navigate("MA")}>
                     <Text style={styles.buttonText}>MOVIE & ANIMATION</Text>
                     <Text style={styles.buttonText2} >ภาพยนตร์ และแอนิเมชัน</Text>
                 </TouchableOpacity>
-                
                 <TouchableOpacity style={[styles.button, { marginTop: 10 }]} onPress={() => navigation.navigate("Song")}>
-                    <Text style={styles.buttonText}>SONG</Text>
+                    <Text style={styles.buttonText}>MUSIC</Text>
                     <Text style={styles.buttonText2} >เพลง</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.button, { marginTop: 10 }]} onPress={() => navigation.navigate("Book")}>
@@ -43,18 +43,7 @@ const Theapyscreen = ({ navigation }) => {
                     <Text style={styles.buttonText}>E-BOOK</Text>
                     <Text style={styles.buttonText2}>อีบุ๊ก</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("AddNewData")}>
-                    <Text style={styles.buttonText}>UPDATE MOVIE & ANIMATION</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("Editsong")}>
-                    <Text style={styles.buttonText}>EDIT SONG</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("Editbook")}>
-                    <Text style={styles.buttonText}>EDIT BOOK</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, { marginTop: 10 }]}onPress={() => navigation.navigate("EditEbook")}>
-                    <Text style={styles.buttonText}>EDIT E-BOOK</Text>
-                </TouchableOpacity>
+                
                 </LinearGradient>
             </ScrollView>
         </View>
