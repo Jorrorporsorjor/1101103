@@ -132,7 +132,6 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <StripeProvider publishableKey="your-stripe-publishable-key">
-      <ImageBackground source={require('../pic/B26.gif')} style={styles.backgroundImage}>
         <View style={styles.container}>
           <Image source={{ uri: image }} style={styles.icon} />
           <Text style={styles.text}>{name}</Text>
@@ -161,7 +160,6 @@ const ProfileScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
-      </ImageBackground>
     </StripeProvider>
   );
 };
@@ -173,9 +171,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    borderRadius: 30,
+    borderRadius: 25,
     marginTop: 60,
     bottom: 100,
+    backgroundColor: 'red',
     
   },
   backgroundImage: {
